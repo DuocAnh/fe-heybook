@@ -345,3 +345,16 @@ export const setDefaultAddressAPI = async (addressId) => {
   const response = await authorizedAxiosInstance.patch(`${API_ROOT}/v1/addresses/${addressId}/set-default`)
   return response.data
 }
+// *** Revenue APIs ***
+export const getLast6MonthsRevenueAPI = async () => {
+  const response = await authorizedAxiosInstance.get(`${API_ROOT}/v1/orders/admin/revenue/last-6-months`)
+  return response.data
+}
+export const getStatsCurrentMonthAPI = async () => {
+  const response = await authorizedAxiosInstance.get(`${API_ROOT}/v1/orders/admin/stats/current-month`)
+  return response.data
+}
+export const getTrendingProductsAPI = async () => {
+  const response = await axios.get(`${API_ROOT}/v1/products/trend-products`)
+  return response.data
+}

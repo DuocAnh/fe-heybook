@@ -1,66 +1,84 @@
-// src/pages/LiveChat.jsx
-import { useEffect, useState } from 'react';
-import { db, ref, onValue, push } from '@/firebase';
+import { useEffect, useRef, useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
+import io from 'socket.io-client';
+
+const socket = io('http://localhost:3000'); // ⚠️ Đổi khi deploy
 
 const LiveChat = () => {
     const [users, setUsers] = useState([]);
     const [selectedUser, setSelectedUser] = useState(null);
     const [messages, setMessages] = useState([]);
     const [reply, setReply] = useState('');
+    const selectedUserRef = useRef(null);
 
-    // ✅ Lấy danh sách khách hàng đã nhắn tin
+    // 🧠 Khi admin kết nối
     useEffect(() => {
-        const chatRef = ref(db, 'chats');
-        const unsubscribe = onValue(chatRef, (snapshot) => {
-            const data = snapshot.val();
-            if (data) {
-                const parsed = Object.entries(data).map(([id, val]) => ({
-                    id,
-                    ...val.metadata,
-                }));
-                setUsers(parsed.reverse());
-            }
+        socket.emit('adminConnect');
+
+        socket.on('userList', (userList) => {
+            setUsers(userList);
         });
 
-        return () => unsubscribe();
+        return () => {
+            socket.off('userList');
+        };
     }, []);
 
-    // ✅ Lắng nghe tin nhắn của khách hàng đang chọn
     useEffect(() => {
-        if (selectedUser?.phone) {
-            const msgRef = ref(db, `chats/${selectedUser.phone}/messages`);
-            const unsubscribe = onValue(msgRef, (snapshot) => {
-                const data = snapshot.val();
-                const list = data ? Object.values(data) : [];
-                setMessages(list);
-            });
+        selectedUserRef.current = selectedUser;
+    }, [selectedUser]);
 
-            return () => unsubscribe();
-        } else {
-            setMessages([]);
+    // 📩 Nhận tin nhắn mới
+    useEffect(() => {
+        const handleNewMessage = (msg) => {
+            const selected = selectedUserRef.current;
+            if (msg?.from === selected?.name || msg?.to === selected?.name) {
+
+                setMessages((prev) => [...prev, msg]);
+            }
+        };
+
+        socket.on('newMessage', handleNewMessage);
+
+        return () => {
+            socket.off('newMessage', handleNewMessage);
+        };
+    }, []);
+
+    // 🔄 Khi chọn user, lấy lịch sử
+    useEffect(() => {
+        if (selectedUser?.name) {
+            socket.emit('joinConversation', selectedUser.name);
+            socket.emit('getMessages', selectedUser.name);
+
+            socket.once('messageHistory', (msgs) => {
+                console.log('🗂 Lịch sử tin nhắn:', msgs);
+                setMessages(msgs || []);
+            });
         }
     }, [selectedUser]);
 
-    // ✅ Gửi phản hồi
+    // 📤 Gửi tin nhắn admin
     const sendReply = () => {
-        if (!reply.trim() || !selectedUser?.phone) return;
+        if (!reply.trim() || !selectedUser?.name) return;
 
-        const msgRef = ref(db, `chats/${selectedUser.phone}/messages`);
-        push(msgRef, {
-            sender: 'admin',
+        const message = {
+            from: 'admin',
+            to: selectedUser.name,
             content: reply.trim(),
-            timestamp: new Date().toISOString(),
-        }).then(() => {
-            setReply('');
-        });
+            timestamp: new Date().toISOString()
+        };
+
+        socket.emit('sendMessage', message);
+        setMessages((prev) => [...prev, message]);
+        setReply('');
     };
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-6">
-            {/* Danh sách người dùng chat */}
+            {/* Danh sách user */}
             <div className="col-span-1">
                 <Card>
                     <CardHeader className="font-bold text-lg">Khách hàng nhắn đến</CardHeader>
@@ -72,7 +90,6 @@ const LiveChat = () => {
                                 onClick={() => setSelectedUser(u)}
                             >
                                 <div className="font-medium">{u.name || 'Ẩn danh'}</div>
-                                <div className="text-xs text-gray-500">{u.phone}</div>
                                 <div className="text-sm mt-1 line-clamp-2">{u.message || '...'}</div>
                             </div>
                         ))}
@@ -80,22 +97,19 @@ const LiveChat = () => {
                 </Card>
             </div>
 
-            {/* Nội dung tin nhắn */}
+            {/* Khung chat */}
             <div className="col-span-2">
                 {selectedUser ? (
                     <Card className="h-full flex flex-col">
                         <CardHeader className="font-semibold">
-                            Chat với: {selectedUser.name} – {selectedUser.phone}
+                            Chat với: {selectedUser.name}
                         </CardHeader>
 
                         <CardContent className="flex-1 overflow-auto space-y-2">
                             {messages.map((msg, idx) => (
                                 <div
                                     key={idx}
-                                    className={`p-2 rounded w-fit max-w-[70%] ${msg.sender === 'admin'
-                                            ? 'ml-auto bg-blue-100 text-right'
-                                            : 'mr-auto bg-gray-100'
-                                        }`}
+                                    className={`p-2 rounded w-fit max-w-[70%] ${msg.sender === 'admin' ? 'ml-auto bg-blue-100 text-right' : 'mr-auto bg-gray-100'}`}
                                 >
                                     <p className="text-sm">{msg.content}</p>
                                     <p className="text-xs text-gray-500">

@@ -197,26 +197,7 @@ export default function ProductDetail() {
             )}
           </div>
 
-          {/* Action Buttons */}
-          <div className="mt-6 flex gap-3">
-            {product && (
-              <AddToCartButton
-                product={{
-                  id: product.id,
-                  ...product
-                }}
-                quantity={quantity}
-                variant="outline"
-                size="default"
-                className="flex-1 border-red-600 text-red-600 hover:bg-red-50"
-                showQuantitySelector={false}
-                onAddToCartSuccess={resetQuantity}
-              />
-            )}
-            <Button className="flex-1 bg-red-600 hover:bg-red-700" onClick={handleBuyNow}>
-              Mua ngay
-            </Button>
-          </div>
+
         </div>
 
         {/* Right Column - Product Details */}
@@ -228,7 +209,7 @@ export default function ProductDetail() {
           </div>
 
           {/* Product Info */}
-          <div className="grid grid-cols-2 gap-4 text-sm">
+          {/* <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
               <span className="text-gray-600">Danh mục:</span>
               <span className="ml-2">{product.category?.name || 'Chưa phân loại'}</span>
@@ -267,7 +248,7 @@ export default function ProductDetail() {
                 )}
               </>
             )}
-          </div>
+          </div> */}
 
           {/* Rating and Sales */}
           <div className="flex items-center gap-4">
@@ -342,66 +323,81 @@ export default function ProductDetail() {
               </Button>
             </div>
           </div>
+          {/* Action Buttons */}
+          <div className="mt-6 flex gap-3">
+            {product && (
+              <AddToCartButton
+                product={{
+                  id: product.id,
+                  ...product
+                }}
+                quantity={quantity}
+                variant="outline"
+                size="default"
+                className="w-36 border-red-600 text-red-600 hover:bg-red-50"
+                showQuantitySelector={false}
+                onAddToCartSuccess={resetQuantity}
+              />
+            )}
+            <Button className="w-36 bg-red-600 hover:bg-red-700" onClick={handleBuyNow}>
+              Mua ngay
+            </Button>
+          </div>
 
           {/* Book Detail Information */}
           <div className="rounded-lg border bg-white p-6 shadow-sm">
             <h2 className="mb-4 text-lg font-semibold">Thông tin chi tiết</h2>
-            <div className="divide-y text-sm text-gray-700">
-              <div className="py-2 flex justify-between">
-                <span className="text-gray-500">Mã hàng</span>
-                <span className="text-right">8935337532110</span>
-              </div>
-              <div className="py-2 flex justify-between">
-                <span className="text-gray-500">Độ Tuổi</span>
-                <span className="text-blue-600 cursor-pointer hover:underline">5+</span>
-              </div>
-              <div className="py-2 flex justify-between">
-                <span className="text-gray-500">Tên Nhà Cung Cấp</span>
-                <span className="text-blue-600 cursor-pointer hover:underline">Việt Tinh Anh</span>
-              </div>
-              <div className="py-2 flex justify-between">
-                <span className="text-gray-500">Năm XB</span>
-                <span>2025</span>
-              </div>
-              <div className="py-2 flex justify-between">
-                <span className="text-gray-500">Thương Hiệu</span>
-                <span className="text-blue-600 cursor-pointer hover:underline">Clever Hippo</span>
-              </div>
-              <div className="py-2 flex justify-between">
-                <span className="text-gray-500">Xuất Xứ Thương Hiệu</span>
-                <span>Việt Nam</span>
-              </div>
-              <div className="py-2 flex justify-between">
-                <span className="text-gray-500">Nơi Gia Công & Sản Xuất</span>
-                <span>Việt Nam</span>
-              </div>
-              <div className="py-2 flex justify-between">
-                <span className="text-gray-500">Màu sắc</span>
-                <span className="text-pink-600">Hồng</span>
-              </div>
-              <div className="py-2 flex justify-between">
-                <span className="text-gray-500">Chất liệu</span>
-                <span>Vải</span>
-              </div>
-              <div className="py-2 flex justify-between">
-                <span className="text-gray-500">Trọng lượng (gr)</span>
-                <span>900</span>
-              </div>
-              <div className="py-2">
-                <span className="text-gray-500">Sản phẩm bán chạy nhất</span>
-                <div>
-                  <a href="#" className="text-blue-600 hover:underline text-sm">
-                    Top 100 sản phẩm Tiểu Học - Bé Gái bán chạy của tháng
-                  </a>
+            {product.bookDetail && (
+              <>
+                <div className="divide-y text-sm text-gray-700">
+                  <div className="py-2 flex justify-between">
+                    <span className="text-gray-500">Tác giả</span>
+                    <span className="text-right">{product.bookDetail.author}</span>
+                  </div>
+                  <div className="py-2 flex justify-between">
+                    <span className="text-gray-500">Ngôn ngữ</span>
+                    <span className="text-blue-600 cursor-pointer hover:underline">{product.bookDetail.language}</span>
+                  </div>
+                  <div className="py-2 flex justify-between">
+                    <span className="text-gray-500">Số Trang</span>
+                    <span className="text-blue-600 cursor-pointer hover:underline">{product.bookDetail.pageCount}</span>
+                  </div>
+                  <div className="py-2 flex justify-between">
+                    <span className="text-gray-500">Năm XB</span>
+                    <span>{product.bookDetail.publishYear}</span>
+                  </div>
+                  <div className="py-2 flex justify-between">
+                    <span className="text-gray-500">Nhà xuất bản</span>
+                    <span className="text-blue-600 cursor-pointer hover:underline">{product.bookDetail.publisher}</span>
+                  </div>
+
+
                 </div>
-              </div>
-              <div className="pt-2 text-xs text-gray-500">
-                Giá sản phẩm trên Fahasa.com đã bao gồm thuế theo luật hiện hành. Bên cạnh đó, tùy vào loại sản phẩm, hình thức và địa chỉ giao hàng mà có thể phát sinh thêm chi phí khác như Phụ phí đóng gói, phí vận chuyển, phụ phí hàng cồng kềnh,...
-              </div>
-              <div className="pt-2 text-xs text-red-500">
-                Chính sách khuyến mãi trên Fahasa.com không áp dụng cho Hệ thống Nhà sách Fahasa trên toàn quốc
-              </div>
-            </div>
+              </>
+            )}
+            {product.stationeryDetail && (
+              <>
+                <div className="divide-y text-sm text-gray-700">
+                  <div className="py-2 flex justify-between">
+                    <span className="text-gray-500">Thương hiệu</span>
+                    <span className="text-right">{product.stationeryDetail.brand}</span>
+                  </div>
+                  <div className="py-2 flex justify-between">
+                    <span className="text-gray-500">Nơi sản xuất:</span>
+                    <span className="text-blue-600 cursor-pointer hover:underline">{product.stationeryDetail.placeProduction}</span>
+                  </div>
+                  <div className="py-2 flex justify-between">
+                    <span className="text-gray-500">Màu sắc:</span>
+                    <span className="text-blue-600 cursor-pointer hover:underline">{product.stationeryDetail.color}</span>
+                  </div>
+
+
+
+                </div>
+              </>
+            )}
+
+
           </div>
 
 

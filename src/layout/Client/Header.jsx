@@ -30,8 +30,9 @@ export default function Header() {
   const [bookGenres, setBookGenres] = useState([])
 
   const categoryData = useMemo(() => ({
-    "Văn phòng phẩm": categories.map(cat => cat.name),
-    "Sách": bookGenres.map(genre => genre.name)
+    "Sách": bookGenres.map(genre => genre.name),
+    "Văn phòng phẩm": categories.map(cat => cat.name)
+
   }), [categories, bookGenres])
 
   useEffect(() => {

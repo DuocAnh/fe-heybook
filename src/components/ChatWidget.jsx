@@ -1,183 +1,159 @@
-// src/components/ChatWidget.jsx
-import { useEffect, useState } from 'react'
-import { db, ref, push, set } from '@/firebase'
-import { onValue } from 'firebase/database';
+import { useEffect, useState, useRef } from 'react'
+import { useSelector } from 'react-redux'
+import { io } from 'socket.io-client'
+import { selectCurrentUser } from '@/redux/userSlice'
 
+const socket = io('http://localhost:3000')
 
 const ChatWidget = () => {
     const [isOpen, setIsOpen] = useState(false)
-    const [messages, setMessages] = useState([]);
-    const [chatStarted, setChatStarted] = useState(false);
-    const [formData, setFormData] = useState({
-        name: '',
-        email: '',
-        phone: '',
-        service: '',
-        message: ''
-    })
+    const [formData, setFormData] = useState({ service: '', message: '' })
+    const [chatStarted, setChatStarted] = useState(false)
+    const [messages, setMessages] = useState([])
+    const messageEndRef = useRef(null)
+    const userIdRef = useRef('')
+
+    const currentUser = useSelector(selectCurrentUser)
+    console.log(userIdRef.current, 'ducanh');
+
 
     useEffect(() => {
-        if (formData.phone) {
-            const msgRef = ref(db, `chats/${formData.phone}/messages`);
-            const unsubscribe = onValue(msgRef, (snapshot) => {
-                const data = snapshot.val();
-                const list = data ? Object.values(data) : [];
-                setMessages(list);
-            });
-
-            return () => unsubscribe();
+        if (currentUser?.userName) {
+            userIdRef.current = currentUser.userName
         }
-    }, [formData.phone]);
+    }, [currentUser])
 
-    const handleChange = (e) => {
-        const { name, value } = e.target
-        setFormData(prev => ({ ...prev, [name]: value }))
+    useEffect(() => {
+        socket.on('newMessage', (msg) => {
+            if (msg.from === 'admin' && msg.to === userIdRef.current) {
+                setMessages((prev) => [...prev, { sender: 'admin', content: msg.content }])
+            }
+        })
+
+        return () => {
+            socket.off('newMessage')
+        }
+    }, [])
+
+    useEffect(() => {
+        if (messageEndRef.current) {
+            messageEndRef.current.scrollIntoView({ behavior: 'smooth' })
+        }
+    }, [messages])
+
+    const handleStartChat = (e) => {
+        e.preventDefault()
+        const { service, message } = formData
+        const name = currentUser?.userName
+        console.log(userIdRef.current, service, message, 'anhh');
+
+
+        if (!name || !service || !message) {
+
+            alert('Vui lòng nhập đầy đủ thông tin')
+            return
+        }
+
+        userIdRef.current = name
+
+        socket.emit('register', {
+            name,
+            service,
+            message
+        })
+
+        socket.emit('sendMessage', {
+            from: name,
+            to: 'admin',
+            content: message,
+            timestamp: new Date().toISOString()
+        })
+
+        setMessages([
+            {
+                sender: 'user',
+                content: message,
+                timestamp: new Date().toISOString()
+            }
+        ])
+
+        setChatStarted(true)
+        setFormData({ ...formData, message: '' })
     }
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
+    const handleSend = (e) => {
+        e.preventDefault()
+        if (!formData.message.trim()) return
 
-        if (!formData.name || !formData.phone || !formData.service || !formData.message) {
-            alert("Vui lòng điền đầy đủ thông tin bắt buộc.");
-            return;
-        }
-
-        const conversationId = formData.phone; // sử dụng số điện thoại làm ID hội thoại
-        const conversationRef = ref(db, `chats/${conversationId}`);
-
-        const metadata = {
-            ...formData,
-            createdAt: new Date().toISOString()
-        };
-
-        // Lưu metadata nếu chưa có
-        set(ref(db, `chats/${conversationId}/metadata`), metadata);
-
-        // Thêm message
-        const msgRef = ref(db, `chats/${conversationId}/messages`);
-        push(msgRef, {
-            sender: "user",
+        const msg = {
+            from: userIdRef.current,
+            to: 'admin',
             content: formData.message,
             timestamp: new Date().toISOString()
-        }).then(() => {
-            setChatStarted(true);     // ✅ Chuyển sang màn hình hội thoại
-            setFormData(prev => ({ ...prev, message: '' }));
-        }).catch(err => {
-            console.error("Gửi thất bại:", err);
-            alert("Không thể gửi tin nhắn.");
-        });
-    };
+        }
 
+        socket.emit('sendMessage', msg)
 
+        setMessages((prev) => [...prev, { sender: 'user', content: formData.message }])
+        setFormData((prev) => ({ ...prev, message: '' }))
+    }
+
+    const handleCloseChat = () => {
+        setIsOpen(false)
+        setChatStarted(false)
+        setMessages([])
+        socket.disconnect()
+    }
 
     return (
         <div className="fixed bottom-6 right-6 z-50">
             {isOpen ? (
-                <div className="w-80 bg-white rounded shadow-lg border border-gray-300 p-4 flex flex-col">
+                <div className="w-80 bg-white rounded shadow-lg p-4 flex flex-col">
                     <div className="flex justify-between items-center mb-2">
-                        <h2 className="text-sm font-semibold">Hỗ trợ trực tuyến</h2>
-                        <button
-                            onClick={() => {
-                                setIsOpen(false);
-                                setChatStarted(false);
-                            }}
-                            className="text-red-500 text-xl"
-                        >
-                            ×
-                        </button>
+                        <h2 className="font-bold text-lg">Hỗ trợ trực tuyến</h2>
+                        <button onClick={handleCloseChat} className="text-red-500 font-bold text-xl">×</button>
                     </div>
 
                     {!chatStarted ? (
-                        <form onSubmit={handleSubmit} className="space-y-2 text-sm">
+                        <form onSubmit={handleStartChat} className="flex flex-col gap-2">
                             <input
                                 type="text"
-                                name="name"
-                                placeholder="Nhập tên của bạn *"
-                                required
-                                className="w-full border px-2 py-1 rounded"
-                                value={formData.name}
-                                onChange={handleChange}
-                            />
-                            <input
-                                type="email"
-                                name="email"
-                                placeholder="Nhập email của bạn"
-                                className="w-full border px-2 py-1 rounded"
-                                value={formData.email}
-                                onChange={handleChange}
-                            />
-                            <input
-                                type="tel"
-                                name="phone"
-                                placeholder="Nhập số điện thoại của bạn *"
-                                required
-                                className="w-full border px-2 py-1 rounded"
-                                value={formData.phone}
-                                onChange={handleChange}
-                            />
-                            <select
-                                name="service"
-                                className="w-full border px-2 py-1 rounded"
-                                required
+                                placeholder="Dịch vụ quan tâm"
+                                className="border px-2 py-1 rounded"
                                 value={formData.service}
-                                onChange={handleChange}
-                            >
-                                <option value="">--- Chọn 1 dịch vụ hỗ trợ ---</option>
-                                <option value="order">Hỗ trợ đặt hàng</option>
-                                <option value="payment">Thanh toán</option>
-                                <option value="shipping">Giao hàng</option>
-                                <option value="other">Khác</option>
-                            </select>
-                            <textarea
-                                name="message"
-                                placeholder="Tin nhắn..."
-                                className="w-full border px-2 py-1 rounded"
-                                rows={3}
-                                value={formData.message}
-                                onChange={handleChange}
+                                onChange={(e) => setFormData({ ...formData, service: e.target.value })}
                             />
-                            <button
-                                type="submit"
-                                className="bg-red-500 text-white py-1 px-3 rounded hover:bg-red-600 w-full"
-                            >
-                                BẮT ĐẦU TRÒ CHUYỆN
+                            <textarea
+                                placeholder="Lời nhắn..."
+                                className="border px-2 py-1 rounded"
+                                value={formData.message}
+                                onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                            />
+                            <button type="submit" className="bg-red-500 text-white px-3 py-1 rounded">
+                                Bắt đầu trò chuyện
                             </button>
                         </form>
                     ) : (
                         <>
-                            {/* ✅ Lịch sử tin nhắn */}
-                            <div className="h-60 overflow-y-auto border p-2 rounded bg-gray-50 text-sm mb-2">
-                                {messages.map((msg, idx) => (
-                                    <div
-                                        key={idx}
-                                        className={`mb-2 ${msg.sender === 'user' ? 'text-right text-blue-600' : 'text-left text-green-600'}`}
-                                    >
-                                        <div className="inline-block max-w-[70%] p-2 rounded bg-white border border-gray-200">
-                                            <p className="mb-1">{msg.content}</p>
-                                            <p className="text-xs text-gray-400">
-                                                {new Date(msg.timestamp).toLocaleTimeString([], {
-                                                    hour: '2-digit',
-                                                    minute: '2-digit',
-                                                })}
-                                            </p>
+                            <div className="h-60 overflow-y-auto bg-gray-100 p-2 rounded">
+                                {messages.map((m, idx) => (
+                                    <div key={idx} className={`mb-2 ${m.sender === 'user' ? 'text-right' : 'text-left'}`}>
+                                        <div className={`inline-block px-3 py-2 rounded ${m.sender === 'user' ? 'bg-blue-100' : 'bg-white'}`}>
+                                            {m.content}
                                         </div>
                                     </div>
                                 ))}
+                                <div ref={messageEndRef}></div>
                             </div>
 
-                            {/* ✅ Gửi tin nhắn mới */}
-                            <form onSubmit={handleSubmit} className="flex gap-1">
+                            <form onSubmit={handleSend} className="flex mt-2">
                                 <input
-                                    name="message"
                                     value={formData.message}
-                                    onChange={handleChange}
-                                    placeholder="Nhập nội dung..."
-                                    className="flex-1 border px-2 py-1 rounded text-sm"
+                                    onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                                    placeholder="Nhập tin nhắn..."
+                                    className="flex-1 border px-2 py-1 rounded"
                                 />
-                                <button
-                                    type="submit"
-                                    className="bg-red-500 text-white px-3 rounded hover:bg-red-600"
-                                >
+                                <button type="submit" className="ml-2 bg-red-500 text-white px-3 rounded">
                                     Gửi
                                 </button>
                             </form>
@@ -187,15 +163,13 @@ const ChatWidget = () => {
             ) : (
                 <button
                     onClick={() => setIsOpen(true)}
-                    className="bg-red-500 text-white p-3 rounded-full shadow-lg hover:bg-red-600"
-                    title="Chat hỗ trợ"
+                    className="bg-red-500 text-white p-3 rounded-full shadow-md"
                 >
                     💬
                 </button>
             )}
         </div>
-    );
-
+    )
 }
 
 export default ChatWidget

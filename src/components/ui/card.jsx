@@ -47,14 +47,14 @@ function CardAction({ className, ...props }) {
 }
 
 function CardContent({ className, ...props }) {
-  return <div data-slot="card-content" className={cn('px-6', className)} {...props} />
+  return <div data-slot="card-content" className={cn('px-6 max-h-[50vh]', className)} {...props} />
 }
 
 function CardFooter({ className, ...props }) {
   return (
     <div
       data-slot="card-footer"
-      className={cn('flex items-center px-6 [.border-t]:pt-6', className)}
+      className={cn('flex items-center px-6 [.border-t]:pt-6 ', className)}
       {...props}
     />
   )

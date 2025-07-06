@@ -1,6 +1,6 @@
 import { Star, Search } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
-import { searchAndFilterProductsAPI } from '@/apis'
+import { getTrendingProductsAPI, searchAndFilterProductsAPI } from '@/apis'
 import { useEffect, useState, useCallback } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
@@ -45,6 +45,7 @@ export default function HomePage() {
   const searchQuery = useSelector(selectSearchQuery)
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 12
+  const [trendingProducts, setTrendingProducts] = useState([])
 
   const totalPages = Math.ceil(products.count / itemsPerPage)
 
@@ -69,34 +70,39 @@ export default function HomePage() {
     }
   }, [searchParams, searchQuery, dispatch])
 
-  const fetchProducts = useCallback(
-    async (filterParams = {}, page = 1) => {
-      setLoading(true)
-      try {
-        const searchFilters = {
-          ...filterParams,
-          page,
-          itemsPerPage
-        }
 
-        if (searchQuery && searchQuery.trim()) {
-          searchFilters.search = searchQuery.trim()
-        }
-
-        const data = await searchAndFilterProductsAPI(searchFilters)
-        setProducts(data)
-      } catch {
-        setProducts({ data: [], count: 0 })
-      } finally {
-        setLoading(false)
-      }
-    },
-    [searchQuery]
-  )
 
   useEffect(() => {
-    fetchProducts(filters, currentPage)
-  }, [filters, currentPage, fetchProducts])
+    const fetchTrendingProducts = async () => {
+      try {
+        const res = await getTrendingProductsAPI()
+        const mappedTrending = res.data.map((product) => {
+          const price = parseFloat(product.price)
+          const discount = parseFloat(product.discount)
+          const originalPrice =
+            discount > 0 ? Math.round(price / (1 - discount / 100)) : price
+
+          return {
+            id: product.id,
+            title: product.name,
+            price,
+            originalPrice,
+            discount,
+            sold: product.sold || Math.floor(Math.random() * 200), // fallback nếu không có sold
+            badge: discount > 0 ? 'Giảm giá' : 'Mới',
+            image: product.coverImageUrl || product.productImages?.[0]?.imageUrl || ''
+          }
+        })
+
+        setTrendingProducts(mappedTrending)
+      } catch (error) {
+        console.error('Lỗi khi gọi API trend-products:', error)
+      }
+    }
+
+    fetchTrendingProducts()
+  }, [])
+
 
   const handleFiltersChange = (newFilters) => {
     setFilters(newFilters)
@@ -143,149 +149,6 @@ export default function HomePage() {
     return (price * (100 - discount)) / 100
   }
 
-  const trendingProducts = [
-    {
-      title: "Boxset Manga - Silver Spoon: Tập 1 - 15",
-      price: 690000,
-      originalPrice: 726000,
-      discount: 4,
-      sold: 176,
-      badge: "Xu hướng",
-      image: "https://cdn1.fahasa.com/media/catalog/product/d/o/doraemon-movie-story-mau_doraemon-nobita-va-cuoc-phieu-luu-vao-the-gioi-trong-tranh_bia.jpg",
-    },
-    {
-      title: "Doraemon Movie Story - Nobita Và Cuộc Phiêu Lưu",
-      price: 33250,
-      originalPrice: 35000,
-      discount: 5,
-      sold: 53,
-      badge: "Mới",
-      image: "https://cdn1.fahasa.com/media/catalog/product/8/9/8935325011559.jpg",
-    },
-    {
-      title: "Ba Lô Fancy Bestie Forever - Clever Hippo BH1234/PINK",
-      price: 815150,
-      originalPrice: 959000,
-      discount: 15,
-      sold: 21,
-      image: "https://cdn1.fahasa.com/media/catalog/product/8/9/8935337532110.jpg",
-    },
-    {
-      title: "Bộ Thẻ Sưu Tập - Card Collection Thám Tử Lừng Danh Conan",
-      price: 58500,
-      originalPrice: 69000,
-      discount: 15,
-      sold: 18,
-      badge: "Mới",
-      image: "https://cdn1.fahasa.com/media/catalog/product/c/h/chttldcn.jpg",
-    },
-    {
-      title: "English Grammar In Use With Answer",
-      price: 337000,
-      originalPrice: 375000,
-      discount: 10,
-      sold: 6,
-      badge: "Mới",
-      image: "https://cdn1.fahasa.com/media/catalog/product/9/7/9781009826464.jpg",
-    },
-    {
-      title: "Boxset Manga - Silver Spoon: Tập 1 - 15",
-      price: 690000,
-      originalPrice: 726000,
-      discount: 4,
-      sold: 176,
-      badge: "Xu hướng",
-      image: "https://cdn1.fahasa.com/media/catalog/product/d/o/doraemon-movie-story-mau_doraemon-nobita-va-cuoc-phieu-luu-vao-the-gioi-trong-tranh_bia.jpg",
-    },
-    {
-      title: "Doraemon Movie Story - Nobita Và Cuộc Phiêu Lưu",
-      price: 33250,
-      originalPrice: 35000,
-      discount: 5,
-      sold: 53,
-      badge: "Mới",
-      image: "https://cdn1.fahasa.com/media/catalog/product/d/o/doraemon-movie-story-mau_doraemon-nobita-va-cuoc-phieu-luu-vao-the-gioi-trong-tranh_bia.jpg",
-    },
-    {
-      title: "Ba Lô Fancy Bestie Forever - Clever Hippo BH1234/PINK",
-      price: 815150,
-      originalPrice: 959000,
-      discount: 15,
-      sold: 21,
-      image: "https://cdn1.fahasa.com/media/catalog/product/d/o/doraemon-movie-story-mau_doraemon-nobita-va-cuoc-phieu-luu-vao-the-gioi-trong-tranh_bia.jpg",
-    },
-    {
-      title: "Bộ Thẻ Sưu Tập - Card Collection Thám Tử Lừng Danh Conan",
-      price: 58500,
-      originalPrice: 69000,
-      discount: 15,
-      sold: 18,
-      badge: "Mới",
-      image: "https://cdn1.fahasa.com/media/catalog/product/d/o/doraemon-movie-story-mau_doraemon-nobita-va-cuoc-phieu-luu-vao-the-gioi-trong-tranh_bia.jpg",
-    },
-    {
-      title: "English Grammar In Use With Answer",
-      price: 337000,
-      originalPrice: 375000,
-      discount: 10,
-      sold: 6,
-      badge: "Mới",
-      image: "https://cdn1.fahasa.com/media/catalog/product/d/o/doraemon-movie-story-mau_doraemon-nobita-va-cuoc-phieu-luu-vao-the-gioi-trong-tranh_bia.jpg",
-    }
-    // Add more items if needed
-  ];
-  const flashSaleProducts = [
-    {
-      name: 'Làm Bạn Với Cô Nàng Dễ Thương Nhí Lớp - Tập 1 - Tặng Postcard',
-      imageUrl: 'https://cdn1.fahasa.com/media/catalog/product/l/a/lam-ban-voi-co-nang-de-thuong-nhi-lop_t_p-1_ban-pho-thong.jpg',
-      price: 52500,
-      originalPrice: 105000,
-      discount: 50,
-      badge: 'BẢN PHỔ THÔNG',
-      sold: 5,
-      soldPercent: 90,
-    },
-    {
-      name: 'Nhóc Miko! Cô Bé Nhí Nhảnh - Best Selection - Miko! Tất Tần Tật',
-      imageUrl: 'https://cdn1.fahasa.com/media/catalog/product/n/x/nxbtre_full_22512022_095142.jpg',
-      price: 22500,
-      originalPrice: 25000,
-      discount: 10,
-      badge: '',
-      sold: 3,
-      soldPercent: 60,
-    },
-    {
-      name: 'Tham Vọng - Tặng Kèm Bookmark + Túi Giấy',
-      imageUrl: 'https://cdn1.fahasa.com/media/catalog/product/z/6/z6201458591499_1f246b207b42892cb656af71738923f3.jpg',
-      price: 114000,
-      originalPrice: 159000,
-      discount: 28,
-      badge: '',
-      sold: 2,
-      soldPercent: 50,
-    },
-    {
-      name: 'Shin - Cậu Bé Bút Chì - Phiên Bản Hoạt Hình Màu - Tập 36',
-      imageUrl: 'https://cdn1.fahasa.com/media/catalog/product/s/h/shin-cau-be-but-chi_-phien-ban-hoat-hinh-mau_tap-36_tb-2023.jpg',
-      price: 45000,
-      originalPrice: 50000,
-      discount: 10,
-      badge: 'Tập 36',
-      sold: 6,
-      soldPercent: 85,
-    },
-    {
-      name: 'One-Punch Man - Tập 29 - Phát Cờ Trỗi Dậy - Tặng Kèm Bookmark',
-      imageUrl: 'https://cdn1.fahasa.com/media/catalog/product/o/n/one-punch-man_bia_bookmark_tap-29.jpg',
-      price: 22500,
-      originalPrice: 25000,
-      discount: 10,
-      badge: 'Tập 29',
-      sold: 2,
-      soldPercent: 45,
-    },
-  ]
 
 
   return (
@@ -297,18 +160,20 @@ export default function HomePage() {
         <BannerSlider></BannerSlider>
 
         {/* FlashSale */}
-        <FlashSale products={flashSaleProducts} />
+        {/* <FlashSale products={flashSaleProducts} /> */}
 
         {/* Trending */}
 
-        <section className=" bg-white rounded-lg shadow-sm overflow-hidden">
+        <section className=" bg-white rounded-lg shadow-sm overflow-hidden mt-2.5">
           <h2 className="text-xl font-bold text-red-600 mb-4 flex items-center gap-2 bg-pink-50 px-4 py-6">
             <img src="https://cdn1.fahasa.com/media/wysiwyg/icon-menu/icon_dealhot_new.png" alt="trending" className="w-6 h-6" />
             Xu Hướng Mua Sắm
           </h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 px-4 py-4">
             {trendingProducts.map((product, idx) => (
-              <div key={idx} className="bg-white  p-2  hover:shadow-md transition">
+              <div key={idx} className="bg-white  p-2  hover:shadow-md transition"
+                onClick={() => navigate(`/product/${product.id}`)}
+              >
                 <div className="relative">
                   {product.badge && (
                     <span className="absolute top-2 left-2 bg-orange-500 text-white text-xs px-1 py-0.5 rounded-sm">
