@@ -137,7 +137,7 @@ export default function Products() {
                     <TableCell>
                       {item.name.length > 38 ? `${item.name.slice(0, 38)}...` : item.name}
                     </TableCell>
-                    <TableCell>{item.category.name}</TableCell>
+                    <TableCell>{item.category?.name}</TableCell>
                     <TableCell>{item.stock}</TableCell>
                     <TableCell>
                       {Number(item.price).toLocaleString('vi-VN', { maximumFractionDigits: 0 })}đ

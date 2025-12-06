@@ -10,7 +10,7 @@ import Users from './Users/Users'
 import Discounts from './Discounts/Discounts'
 import Orders from './Orders/Orders'
 import DashboardMain from './DashboardMain'
-import LiveChat from './LiveChat/LiveChat'
+// import LiveChat from './LiveChat/LiveChat'
 
 export default function Dashboard() {
   return (
@@ -29,7 +29,7 @@ export default function Dashboard() {
               <Route path="/categories/*" element={<Categories />} />
               <Route path="/book-genres/*" element={<BookGenres />} />
               <Route path="/products/*" element={<Products />} />
-              <Route path="/livechat/*" element={<LiveChat />} />
+              {/* <Route path="/livechat/*" element={<LiveChat />} /> */}
               <Route
                 path="/orders/*"
                 element={

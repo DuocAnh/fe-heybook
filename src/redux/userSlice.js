@@ -13,7 +13,7 @@ export const loginUserAPI = createAsyncThunk('user/loginUserAPI', async (data) =
 })
 
 export const logoutUserAPI = createAsyncThunk('user/logoutUserAPI', async (showSuccessMessage = true) => {
-  const response = await authorizedAxiosInstance.delete(`${API_ROOT}/v1/users/logout`)
+  const response = await authorizedAxiosInstance.post(`${API_ROOT}/v1/users/logout`)
   if (showSuccessMessage) {
     toast.success('Đăng xuất thành công!')
   }

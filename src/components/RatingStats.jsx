@@ -82,7 +82,7 @@ export default function RatingStats({ productId }) {
         </CardHeader>
         <CardContent>
           <div className="py-8 text-center">
-            <div className="mb-2 text-gray-400">
+            <div className="mb-2 flex items-center justify-center text-gray-400">
               <StarDisplay rating={0} size="lg" />
             </div>
             <p className="text-gray-500">Chưa có đánh giá nào</p>

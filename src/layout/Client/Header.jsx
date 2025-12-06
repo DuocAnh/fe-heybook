@@ -8,8 +8,10 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
+  DropdownMenuLabel
 } from '@/components/ui/dropdown-menu'
+import { Avatar, AvatarImage } from '@/components/ui/avatar'
 import { useDispatch, useSelector } from 'react-redux'
 import { logoutUserAPI, selectCurrentUser } from '@/redux/userSlice'
 import { setSearchQuery, selectSearchQuery } from '@/redux/searchSlice'
@@ -23,17 +25,19 @@ export default function Header() {
   const currentUser = useSelector(selectCurrentUser)
   const searchQuery = useSelector(selectSearchQuery) || ''
   const [inputValue, setInputValue] = useState('')
-  const [showCategoryMenu, setShowCategoryMenu] = useState(false);
-  const [selectedMainCategory, setSelectedMainCategory] = useState("Sách");
-  const categoryMenuRef = useRef(null);
+  const [showCategoryMenu, setShowCategoryMenu] = useState(false)
+  const [selectedMainCategory, setSelectedMainCategory] = useState('Sách')
+  const categoryMenuRef = useRef(null)
   const [categories, setCategories] = useState([])
   const [bookGenres, setBookGenres] = useState([])
 
-  const categoryData = useMemo(() => ({
-    "Sách": bookGenres.map(genre => genre.name),
-    "Văn phòng phẩm": categories.map(cat => cat.name)
-
-  }), [categories, bookGenres])
+  const categoryData = useMemo(
+    () => ({
+      Sách: bookGenres.map((genre) => genre.name),
+      'Văn phòng phẩm': categories.map((cat) => cat.name)
+    }),
+    [categories, bookGenres]
+  )
 
   useEffect(() => {
     const fetchData = async () => {
@@ -44,7 +48,6 @@ export default function Header() {
         ])
         setCategories(categoriesData)
         setBookGenres(bookGenresData)
-
       } catch {
         // Handle error silently for now
         setCategories([])
@@ -65,17 +68,17 @@ export default function Header() {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-
       if (categoryMenuRef.current && !categoryMenuRef.current.contains(event.target)) {
-        setShowCategoryMenu(false);
+        setShowCategoryMenu(false)
       }
-    };
+    }
 
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('mousedown', handleClickOutside)
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [])
+
   const handleSearch = (e) => {
     e.preventDefault()
     if (inputValue.trim()) {
@@ -84,6 +87,7 @@ export default function Header() {
       navigate(`/product-list?search=${encodeURIComponent(searchTerm)}`)
     }
   }
+
   const handleSearchInputChange = (e) => {
     const value = e.target.value
     setInputValue(value)
@@ -113,6 +117,7 @@ export default function Header() {
   const handleRegister = () => {
     navigate('/register')
   }
+
   const handleCategoryClick = (mainCategory, subCategory) => {
     const type = mainCategory === 'Sách' ? 'BOOK' : 'STATIONERY'
 
@@ -123,7 +128,6 @@ export default function Header() {
       `/product-list?type=${type}&bookGenreId=${encodeURIComponent(subCategory)}&page=1&itemsPerPage=12`
     )
   }
-
 
   return (
     <header className="border-b border-gray-200 bg-white shadow-sm">
@@ -137,8 +141,9 @@ export default function Header() {
               <span className="text-xl font-bold text-red-500">HeyBook.com</span>
             </Link>
           </div>
-          <div ref={categoryMenuRef} className="ml-3 hidden items-center md:flex relative">
-            <Button variant="outline"
+          <div ref={categoryMenuRef} className="relative ml-3 hidden items-center md:flex">
+            <Button
+              variant="outline"
               className="flex items-center space-x-2 border-gray-300"
               onClick={() => setShowCategoryMenu(!showCategoryMenu)}
             >
@@ -149,14 +154,15 @@ export default function Header() {
 
             {/* Dropdown hiển thị 2 cột */}
             {showCategoryMenu && (
-              <div className="absolute top-full left-0 mt-2 z-50 bg-white border rounded shadow-lg flex w-[480px]">
+              <div className="absolute top-full left-0 z-50 mt-2 flex w-[480px] rounded border bg-white shadow-lg">
                 {/* Cột 1: danh mục chính */}
                 <div className="w-1/2 border-r">
                   {Object.keys(categoryData).map((cat) => (
                     <div
                       key={cat}
-                      className={`px-4 py-2 cursor-pointer hover:bg-red-100 ${selectedMainCategory === cat ? "bg-red-50 font-semibold" : ""
-                        }`}
+                      className={`cursor-pointer px-4 py-2 hover:bg-red-100 ${
+                        selectedMainCategory === cat ? 'bg-red-50 font-semibold' : ''
+                      }`}
                       onMouseEnter={() => setSelectedMainCategory(cat)}
                     >
                       {cat}
@@ -169,7 +175,7 @@ export default function Header() {
                   {categoryData[selectedMainCategory].map((sub, idx) => (
                     <div
                       key={idx}
-                      className="py-1 px-2 hover:text-red-600 cursor-pointer text-sm"
+                      className="cursor-pointer px-2 py-1 text-sm hover:text-red-600"
                       onClick={() => handleCategoryClick(selectedMainCategory, idx)}
                     >
                       {sub}
@@ -208,19 +214,38 @@ export default function Header() {
                 <CartIcon />
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" className="flex items-center space-x-2">
+                    <Button variant="ghost" className="h-12">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage
+                          src={
+                            currentUser.avatar ||
+                            'https://i.pinimg.com/236x/5e/e0/82/5ee082781b8c41406a2a50a0f32d6aa6.jpg'
+                          }
+                          alt={currentUser.userName}
+                        />
+                        {/* <AvatarFallback>JD</AvatarFallback> */}
+                      </Avatar>
+                      <p className="text-base font-medium">{currentUser.userName}</p>
+                    </Button>
+                    {/* <Button variant="ghost" size="sm" className="flex items-center space-x-2">
                       <User className="h-5 w-5 text-gray-600" />
                       <span className="text-sm font-medium text-gray-700">{currentUser.userName}</span>
-                    </Button>
+                    </Button> */}
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuContent align="end" className="w-55">
+                    <DropdownMenuLabel className="font-normal">
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-base leading-none font-medium">{currentUser.userName}</p>
+                        <p className="text-muted-foreground text-ms leading-none">{currentUser.email}</p>
+                      </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleProfile}>
                       <User className="mr-2 h-4 w-4" />
                       <span>Thông tin cá nhân</span>
                     </DropdownMenuItem>
                     {(currentUser.role === 'ADMIN' || currentUser.role === 'USER') && (
                       <>
-                        <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={handleAdminAccess}>
                           <Settings className="mr-2 h-4 w-4" />
                           <span>Truy cập Admin</span>
@@ -229,10 +254,10 @@ export default function Header() {
                     )}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
-                      className="text-red-600 focus:bg-red-500 focus:text-white"
+                      className="text-red-600 focus:bg-red-600 focus:text-white"
                       onClick={handleLogout}
                     >
-                      <LogOut className="mr-2 h-4 w-4" />
+                      <LogOut className="mr-2 h-4 w-4 focus:text-white" />
                       <span>Đăng xuất</span>
                     </DropdownMenuItem>
                   </DropdownMenuContent>

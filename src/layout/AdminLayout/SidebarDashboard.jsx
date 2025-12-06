@@ -1,4 +1,14 @@
-import { Home, BookText, ChartBarStacked, BookCopy, Package, TicketPercent, Truck, Users, MessageSquare } from 'lucide-react'
+import {
+  Home,
+  BookText,
+  ChartBarStacked,
+  BookCopy,
+  Package,
+  TicketPercent,
+  Truck,
+  Users,
+  MessageSquare
+} from 'lucide-react'
 import {
   Sidebar,
   SidebarHeader,
@@ -7,23 +17,17 @@ import {
   SidebarGroupContent,
   SidebarGroupLabel,
   SidebarMenu,
-  SidebarMenuButton,
   SidebarMenuItem,
   useSidebar
 } from '@/components/ui/sidebar'
-import { Link } from 'react-router-dom'
+import { NavLink, useLocation } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import { useAdminAccess } from '@/hooks/useAdminAccess'
 
 // Menu items with permissions
 const getMenuItems = (permissions) =>
   [
-    {
-      title: 'Trang chủ',
-      url: '/dashboard',
-      icon: Home,
-      permission: null // Always visible
-    },
+    { title: 'Trang chủ', url: '/dashboard', icon: Home },
     {
       title: 'Quản lý danh mục',
       url: '/dashboard/categories',
@@ -71,8 +75,8 @@ export default function SidebarDashboard() {
   const { state } = useSidebar()
   const isCollapsed = state === 'collapsed'
   const permissions = useAdminAccess()
-
   const items = getMenuItems(permissions)
+  const { pathname } = useLocation()
 
   return (
     <Sidebar collapsible="icon" className="border-gray-300 bg-white">
@@ -90,21 +94,36 @@ export default function SidebarDashboard() {
           <span className="truncate text-xs">Trang quản lý</span>
         </div>
       </SidebarHeader>
+
       <SidebarContent className="bg-white">
         <SidebarGroup>
           <SidebarGroupLabel>Application</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {items.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild className="h-12 gap-3 text-base font-medium">
-                    <Link to={item.url}>
-                      <item.icon className="!size-5 h-10 w-10" strokeWidth="1.8" />
+              {items.map((item) => {
+                const isActiveParent =
+                  item.url === '/dashboard' ? pathname === '/dashboard' : pathname.startsWith(item.url)
+
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <NavLink
+                      to={item.url}
+                      end={item.url === '/dashboard'}
+                      className={({ isActive }) =>
+                        cn(
+                          'flex h-12 w-full items-center gap-2 rounded-md px-3 text-base font-medium transition-colors',
+                          isActive || isActiveParent
+                            ? 'bg-blue-100 font-semibold text-blue-600'
+                            : 'text-gray-700 hover:bg-gray-100'
+                        )
+                      }
+                    >
+                      <item.icon className="!size-5 h-10 w-10 text-current" strokeWidth="1.8" />
                       <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+                    </NavLink>
+                  </SidebarMenuItem>
+                )
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

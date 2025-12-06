@@ -13,13 +13,19 @@ import {
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
 import { SidebarTrigger } from '@/components/ui/sidebar'
-import { useDispatch } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
-import { logoutUserAPI } from '@/redux/userSlice'
+import { useDispatch, useSelector } from 'react-redux'
+import { logoutUserAPI, selectCurrentUser } from '@/redux/userSlice'
 
 export default function HeaderDashboard() {
   const dispatch = useDispatch()
   const navigate = useNavigate()
+
+  const currentUser = useSelector(selectCurrentUser)
+
+  const handleAdminAccess = () => {
+    navigate('/')
+  }
 
   const handleLogout = async () => {
     try {
@@ -61,20 +67,23 @@ export default function HeaderDashboard() {
             <Button variant="ghost" className="h-12">
               <Avatar className="h-10 w-10">
                 <AvatarImage
-                  src="https://i.pinimg.com/236x/5e/e0/82/5ee082781b8c41406a2a50a0f32d6aa6.jpg"
-                  alt="DuocAnh"
+                  src={
+                    currentUser.avatar ||
+                    'https://i.pinimg.com/236x/5e/e0/82/5ee082781b8c41406a2a50a0f32d6aa6.jpg'
+                  }
+                  alt={currentUser.userName}
                 />
                 {/* <AvatarFallback>JD</AvatarFallback> */}
               </Avatar>
-              <p className="text-base font-medium">DuocAnh</p>
+              <p className="text-base font-medium">{currentUser.userName}</p>
             </Button>
           </DropdownMenuTrigger>
 
           <DropdownMenuContent className="w-56 px-2" align="end" forceMount>
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1">
-                <p className="text-base leading-none font-medium">DuocAnh</p>
-                <p className="text-muted-foreground text-ms leading-none">duocanh14@gmail.com</p>
+                <p className="text-base leading-none font-medium">{currentUser.userName}</p>
+                <p className="text-muted-foreground text-ms leading-none">{currentUser.email}</p>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
@@ -83,13 +92,16 @@ export default function HeaderDashboard() {
                 <User className="mr-2 h-4 w-4" />
                 <span>Thông tin cá nhân</span>
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={handleAdminAccess}>
                 <Settings className="mr-2 h-4 w-4" />
-                <span>Cài đặt</span>
+                <span>Truy cập trang chủ</span>
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="focus:bg-red-500 focus:text-amber-50" onClick={() => handleLogout()}>
+            <DropdownMenuItem
+              className="text-red-600 focus:bg-red-600 focus:text-white"
+              onClick={() => handleLogout()}
+            >
               <LogOut className="focus:bg-red-500 focus:text-amber-50" />
               Đăng xuất
             </DropdownMenuItem>

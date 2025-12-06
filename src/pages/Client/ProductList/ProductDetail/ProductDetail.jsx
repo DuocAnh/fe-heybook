@@ -1,3 +1,4 @@
+/* eslint-disable indent */
 import { useParams, useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { getProductByIdAPI, checkUserReviewAPI, addToCartAPI } from '@/apis'
@@ -30,6 +31,7 @@ export default function ProductDetail() {
   const [userReview, setUserReview] = useState(null)
   const [showReviewForm, setShowReviewForm] = useState(false)
   const [totalReviews, setTotalReviews] = useState(0)
+  const [expanded, setExpanded] = useState(false)
 
   const currentUser = useSelector(selectCurrentUser)
 
@@ -155,9 +157,9 @@ export default function ProductDetail() {
 
   return (
     <div className="mx-auto max-w-7xl bg-gray-50 p-4">
-      <div className="grid grid-cols-1 gap-8 rounded-lg bg-white p-6 shadow-sm lg:grid-cols-3 lg:gap-x-[30px]" >
+      <div className="grid grid-cols-1 gap-x-8 rounded-lg bg-white p-6 shadow-sm lg:grid-cols-3 lg:gap-x-[30px]">
         {/* Left Column - Images */}
-        <div className="space-y-4 col-span-1 ">
+        <div className="col-span-1 space-y-4">
           {/* Main Image */}
           <div className="relative">
             <img
@@ -175,36 +177,75 @@ export default function ProductDetail() {
             )}
           </div>
 
-          {/* Thumbnail Images */}
+          {/* Thumbnail Images (5 visible, hover animation + light blue border) */}
           <div className="flex gap-2">
-            {product.productImages && product.productImages.length > 0 ? (
-              product.productImages.map((image, index) => (
-                <div
-                  key={index}
-                  className="relative h-20 w-16 cursor-pointer rounded border-2 border-gray-200"
-                >
-                  <img
-                    src={image.imageUrl}
-                    alt={`${product.name} ${index + 1}`}
-                    className="h-full w-full rounded object-cover"
-                  />
-                </div>
-              ))
+            {product.productImages &&
+            product.productImages.filter((img) => img.imageUrl || img.image_url).length > 0 ? (
+              product.productImages
+                .filter((img) => img.imageUrl || img.image_url)
+                .slice(0, 5)
+                .map((image, index) => (
+                  <div
+                    key={index}
+                    className={
+                      // group: enable group-hover for children
+                      'group relative h-20 w-16 cursor-pointer overflow-hidden rounded border-2 border-gray-200 bg-white ' +
+                      // hover effects: slight scale, light-blue border, subtle shadow and ring
+                      'transform transition duration-200 ease-in-out hover:scale-105 hover:border-blue-200 hover:shadow-lg hover:ring-2 hover:ring-blue-100'
+                    }
+                  >
+                    <img
+                      src={image.imageUrl || image.image_url}
+                      alt={`${product.name} ${index + 1}`}
+                      className="h-full w-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none'
+                        const ph = e.currentTarget.parentElement.querySelector('.placeholder')
+                        if (ph) ph.style.display = 'flex'
+                      }}
+                    />
+
+                    {/* Placeholder khi ảnh lỗi */}
+                    <div
+                      className={
+                        // hidden by default, but will fade in if image errors
+                        'placeholder absolute inset-0 hidden items-center justify-center bg-gray-100 px-1 text-center text-xs text-gray-500 ' +
+                        // subtle fade-in when parent hovered
+                        'opacity-100 transition-opacity duration-200 group-hover:opacity-90'
+                      }
+                      aria-hidden="true"
+                    >
+                      No image
+                    </div>
+
+                    {/* Overlay +N CHUẨN (trừ 5 vì đang hiển thị 5 ảnh) */}
+                    {index === 4 &&
+                      product.productImages.filter((img) => img.imageUrl || img.image_url).length > 5 && (
+                        <div
+                          className={
+                            // overlay centered, semi-transparent; also fade when hovering the thumbnail
+                            'absolute inset-0 flex items-center justify-center bg-black/60 text-lg font-semibold text-white ' +
+                            'opacity-100 transition-opacity duration-200 group-hover:opacity-90'
+                          }
+                        >
+                          +{product.productImages.filter((img) => img.imageUrl || img.image_url).length - 5}
+                        </div>
+                      )}
+                  </div>
+                ))
             ) : (
               <div className="flex h-20 w-16 items-center justify-center rounded bg-gray-200 text-sm text-gray-500">
                 No Images
               </div>
             )}
           </div>
-
-
         </div>
 
         {/* Right Column - Product Details */}
-        <div className="space-y-4 col-span-2" >
+        <div className="col-span-2 space-y-4">
           {/* Title and Badge */}
           <div className="flex items-start gap-2">
-            {product.discount > 0 && <Badge className="bg-orange-500 text-white">Giảm giá</Badge>}
+            {/* {product.discount > 0 && <Badge className="bg-[rgb(201,33,39)] text-white">Giảm giá</Badge>} */}
             <h1 className="text-2xl font-bold text-gray-900">{product.name}</h1>
           </div>
 
@@ -252,7 +293,7 @@ export default function ProductDetail() {
 
           {/* Rating and Sales */}
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-0.5">
               {[1, 2, 3, 4, 5].map((star) => (
                 <Star
                   key={star}
@@ -261,20 +302,20 @@ export default function ProductDetail() {
               ))}
               <span className="ml-1 text-sm text-orange-500">({product.totalReviews || 0} đánh giá)</span>
             </div>
-            <span className="text-sm text-gray-600">Đã bán 799</span>
+            <span className="text-sm text-gray-600">Đã bán {product.totalSold}</span>
           </div>
 
           {/* Price */}
           <div className="flex items-center gap-3">
             {product.discount > 0 ? (
               <>
-                <span className="text-3xl font-bold text-red-600">
+                <span className="text-3xl font-bold text-[rgb(201,33,39)]">
                   {formatPriceWithCurrency((product.price * (100 - product.discount)) / 100)}
                 </span>
                 <span className="text-gray-400 line-through">{formatPriceWithCurrency(product.price)}</span>
                 {product.discount > 0 && (
                   <Badge
-                    className="px-2 py-1 text-xs text-white font-bold"
+                    className="px-2 py-1 text-xs font-bold text-white"
                     style={{ backgroundColor: '#c92127', color: '#ffffff' }}
                   >
                     -{Math.floor(product.discount)}%
@@ -293,14 +334,6 @@ export default function ProductDetail() {
             {product.stock > 0 ? `Còn ${product.stock} sản phẩm` : 'Hết hàng'}
           </div>
 
-          {/* Product Description */}
-          {product.description && (
-            <div className="space-y-2">
-              <h3 className="font-semibold">Mô tả sản phẩm</h3>
-              <p className="text-sm leading-relaxed text-gray-600">{product.description}</p>
-            </div>
-          )}
-
           {/* Product Dimensions */}
           {product.dimension && (
             <div className="text-sm">
@@ -309,9 +342,8 @@ export default function ProductDetail() {
             </div>
           )}
 
-
           {/* Quantity Selector */}
-          <div className="flex items-center gap-4">
+          <div className="mt-5 flex items-center gap-4">
             <span className="font-medium">Số lượng:</span>
             <div className="flex items-center rounded border">
               <Button variant="ghost" size="sm" onClick={decrementQuantity} className="h-8 w-8 p-0">
@@ -323,6 +355,7 @@ export default function ProductDetail() {
               </Button>
             </div>
           </div>
+
           {/* Action Buttons */}
           <div className="mt-6 flex gap-3">
             {product && (
@@ -334,12 +367,12 @@ export default function ProductDetail() {
                 quantity={quantity}
                 variant="outline"
                 size="default"
-                className="w-36 border-red-600 text-red-600 hover:bg-red-50"
+                className="w-40 border-red-600 text-[rgb(201,33,39)] hover:text-red-600"
                 showQuantitySelector={false}
                 onAddToCartSuccess={resetQuantity}
               />
             )}
-            <Button className="w-36 bg-red-600 hover:bg-red-700" onClick={handleBuyNow}>
+            <Button className="w-40 bg-[rgb(201,33,39)] hover:bg-red-700" onClick={handleBuyNow}>
               Mua ngay
             </Button>
           </div>
@@ -350,60 +383,86 @@ export default function ProductDetail() {
             {product.bookDetail && (
               <>
                 <div className="divide-y text-sm text-gray-700">
-                  <div className="py-2 flex justify-between">
+                  <div className="flex justify-between py-2">
+                    <span className="text-gray-500">Thể loại</span>
+                    <span className="text-right">{product.category.name}</span>
+                  </div>
+                  <div className="flex justify-between py-2">
                     <span className="text-gray-500">Tác giả</span>
                     <span className="text-right">{product.bookDetail.author}</span>
                   </div>
-                  <div className="py-2 flex justify-between">
+                  <div className="flex justify-between py-2">
                     <span className="text-gray-500">Ngôn ngữ</span>
-                    <span className="text-blue-600 cursor-pointer hover:underline">{product.bookDetail.language}</span>
+                    <span className="text-right">{product.bookDetail.language}</span>
                   </div>
-                  <div className="py-2 flex justify-between">
-                    <span className="text-gray-500">Số Trang</span>
-                    <span className="text-blue-600 cursor-pointer hover:underline">{product.bookDetail.pageCount}</span>
-                  </div>
-                  <div className="py-2 flex justify-between">
+                  <div className="flex justify-between py-2">
                     <span className="text-gray-500">Năm XB</span>
                     <span>{product.bookDetail.publishYear}</span>
                   </div>
-                  <div className="py-2 flex justify-between">
+                  <div className="flex justify-between py-2">
                     <span className="text-gray-500">Nhà xuất bản</span>
-                    <span className="text-blue-600 cursor-pointer hover:underline">{product.bookDetail.publisher}</span>
+                    <span className="text-right">{product.bookDetail.publisher}</span>
                   </div>
-
-
+                  <div className="flex justify-between py-2">
+                    <span className="text-gray-500">Số Trang</span>
+                    <span className="text-right">{product.bookDetail.pageCount}</span>
+                  </div>
                 </div>
               </>
             )}
             {product.stationeryDetail && (
               <>
                 <div className="divide-y text-sm text-gray-700">
-                  <div className="py-2 flex justify-between">
+                  <div className="flex justify-between py-2">
                     <span className="text-gray-500">Thương hiệu</span>
                     <span className="text-right">{product.stationeryDetail.brand}</span>
                   </div>
-                  <div className="py-2 flex justify-between">
+                  <div className="flex justify-between py-2">
                     <span className="text-gray-500">Nơi sản xuất:</span>
-                    <span className="text-blue-600 cursor-pointer hover:underline">{product.stationeryDetail.placeProduction}</span>
+                    <span className="cursor-pointer text-blue-600 hover:underline">
+                      {product.stationeryDetail.placeProduction}
+                    </span>
                   </div>
-                  <div className="py-2 flex justify-between">
+                  <div className="flex justify-between py-2">
                     <span className="text-gray-500">Màu sắc:</span>
-                    <span className="text-blue-600 cursor-pointer hover:underline">{product.stationeryDetail.color}</span>
+                    <span className="cursor-pointer text-blue-600 hover:underline">
+                      {product.stationeryDetail.color}
+                    </span>
                   </div>
-
-
-
                 </div>
               </>
             )}
-
-
           </div>
-
-
-
-
         </div>
+
+        {/* Product Description */}
+        {product.description && (
+          <div className="col-span-3 mx-1 rounded-xl bg-white p-2">
+            <h3 className="mb-3 text-lg font-semibold">Mô tả sản phẩm</h3>
+
+            <div className="relative">
+              <p
+                className={`text-sm leading-relaxed text-gray-600 transition-all duration-300 ${expanded ? 'max-h-full' : 'line-clamp-5'}`}
+              >
+                {product.description}
+              </p>
+
+              {/* Fade mờ phía dưới khi chưa mở */}
+              {!expanded && (
+                <div className="pointer-events-none absolute bottom-0 left-0 h-10 w-full bg-gradient-to-t from-white to-transparent" />
+              )}
+            </div>
+
+            <div className="mt-3 text-center">
+              <button
+                onClick={() => setExpanded(!expanded)}
+                className="cursor-pointer text-sm text-blue-600 hover:underline"
+              >
+                {expanded ? 'Thu gọn' : 'Xem thêm'}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Reviews Section */}
