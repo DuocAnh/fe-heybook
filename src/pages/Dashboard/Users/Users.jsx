@@ -68,7 +68,7 @@ export default function Users() {
     switch (role) {
       case 'ADMIN':
         return 'bg-red-100 text-red-800 hover:bg-red-100'
-      case 'USER':
+      case 'STAFF':
         return 'bg-blue-100 text-blue-800 hover:bg-blue-100'
       case 'CLIENT':
         return 'bg-green-100 text-green-800 hover:bg-green-100'
@@ -81,7 +81,7 @@ export default function Users() {
     switch (role) {
       case 'ADMIN':
         return 'Quản trị viên'
-      case 'USER':
+      case 'STAFF':
         return 'Nhân viên'
       case 'CLIENT':
         return 'Khách hàng'

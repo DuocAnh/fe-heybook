@@ -1,4 +1,16 @@
-import { Search, Bell, User, ChevronDown, Menu, LogOut, Settings } from 'lucide-react'
+import {
+  Search,
+  Bell,
+  User,
+  ChevronDown,
+  Menu,
+  LogOut,
+  Settings,
+  BookText,
+  LibraryBig,
+  PencilRuler,
+  Dot
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import CartIcon from '@/components/CartIcon'
@@ -130,15 +142,15 @@ export default function Header() {
   }
 
   return (
-    <header className="border-b border-gray-200 bg-white shadow-sm">
+    <header className="border-b border-gray-200 bg-white py-1 shadow-sm">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <Link to="/" className="flex items-center space-x-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-red-500">
-                <span className="text-sm font-bold text-white"></span>
+          <div className="flex items-center pr-3">
+            <Link to="/" className="flex items-center">
+              <div className="flex w-9 items-center justify-center text-[rgb(201,33,39)]">
+                <BookText size={30} strokeWidth={2.4} />
               </div>
-              <span className="text-xl font-bold text-red-500">HeyBook.com</span>
+              <span className="text-xl font-bold text-[rgb(201,33,39)]">HeyBook.com</span>
             </Link>
           </div>
           <div ref={categoryMenuRef} className="relative ml-3 hidden items-center md:flex">
@@ -160,11 +172,13 @@ export default function Header() {
                   {Object.keys(categoryData).map((cat) => (
                     <div
                       key={cat}
-                      className={`cursor-pointer px-4 py-2 hover:bg-red-100 ${
+                      className={`flex cursor-pointer items-center gap-2 px-4 py-2 hover:bg-red-100 ${
                         selectedMainCategory === cat ? 'bg-red-50 font-semibold' : ''
                       }`}
                       onMouseEnter={() => setSelectedMainCategory(cat)}
                     >
+                      {cat === 'Sách' && <LibraryBig className="h-4 w-4 text-[rgb(201,33,39)]" />}
+                      {cat === 'Văn phòng phẩm' && <PencilRuler className="h-4 w-4 text-[rgb(201,33,39)]" />}
                       {cat}
                     </div>
                   ))}
@@ -175,17 +189,18 @@ export default function Header() {
                   {categoryData[selectedMainCategory].map((sub, idx) => (
                     <div
                       key={idx}
-                      className="cursor-pointer px-2 py-1 text-sm hover:text-red-600"
+                      className="flex cursor-pointer px-2 py-1 text-sm hover:text-red-800"
                       onClick={() => handleCategoryClick(selectedMainCategory, idx)}
                     >
-                      {sub}
+                      <Dot className="h-6 w-6 text-[rgb(201,33,39)]" />
+                      <span>{sub}</span>
                     </div>
                   ))}
                 </div>
               </div>
             )}
           </div>{' '}
-          <div className="mx-4 max-w-2xl flex-1">
+          <div className="mx-4 max-w-2xl flex-1 pr-4">
             <form onSubmit={handleSearch} className="relative flex">
               <Input
                 type="text"
@@ -197,13 +212,13 @@ export default function Header() {
               <Button
                 type="submit"
                 size="sm"
-                className="absolute top-0 right-0 h-full rounded-l-none bg-red-500 px-4 text-white hover:bg-red-600"
+                className="absolute top-0 right-0 h-full rounded-l-none bg-[rgb(201,33,39)] px-4 text-white hover:bg-red-600"
               >
                 <Search className="h-4 w-4" />
               </Button>
             </form>
           </div>
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2">
             {' '}
             {currentUser ? (
               <>
@@ -244,7 +259,7 @@ export default function Header() {
                       <User className="mr-2 h-4 w-4" />
                       <span>Thông tin cá nhân</span>
                     </DropdownMenuItem>
-                    {(currentUser.role === 'ADMIN' || currentUser.role === 'USER') && (
+                    {(currentUser.role === 'ADMIN' || currentUser.role === 'STAFF') && (
                       <>
                         <DropdownMenuItem onClick={handleAdminAccess}>
                           <Settings className="mr-2 h-4 w-4" />

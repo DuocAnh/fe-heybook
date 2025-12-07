@@ -11,14 +11,10 @@ function App() {
       {/* ✅ Trang / là Client luôn */}
       <Route path="/*" element={<Client />} />
 
-      {/* ✅ Dashboard chỉ dành cho ADMIN và USER */}
+      {/* ✅ Dashboard chỉ dành cho ADMIN và STAFF */}
       <Route element={<ProtectedRoute requireAdminAccess={true} />}>
         <Route path="/dashboard/*" element={<Dashboard />} />
       </Route>
-
-      {/* ✅ Auth */}
-      <Route path="/login" element={<AuthPage />} />
-      <Route path="/register" element={<AuthPage />} />
     </Routes>
   )
 }

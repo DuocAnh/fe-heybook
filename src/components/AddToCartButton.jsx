@@ -90,10 +90,10 @@ const AddToCartButton = ({
         size={size}
         onClick={handleAddToCart}
         disabled={addToCartMutation.isPending || !product}
-        className={`flex items-center gap-2 ${showQuantitySelector ? 'flex-1' : 'w-full'}`}
+        className={`flex items-center gap-2 ${showQuantitySelector ? 'flex-1' : 'w-full'} h-10 w-50 text-[rgb(201,33,39)] hover:bg-gray-100 hover:text-red-700`}
       >
         <ShoppingCart className="h-4 w-4" />
-        {addToCartMutation.isPending ? 'Đang thêm...' : 'Thêm vào giỏ'}
+        {addToCartMutation.isPending ? 'Đang thêm...' : 'Thêm vào giỏ hàng'}
       </Button>
     </div>
   )

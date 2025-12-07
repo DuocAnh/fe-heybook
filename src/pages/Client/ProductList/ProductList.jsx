@@ -147,7 +147,7 @@ export default function ProductList() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
         {/* Filter Sidebar */}
         <div className="lg:col-span-1">
-          <div className="sticky top-4">
+          <div className="sticky top-4 pr-2">
             <ProductFilter
               filters={filters}
               onFiltersChange={handleFiltersChange}
@@ -199,7 +199,6 @@ export default function ProductList() {
                 >
                   {/* Product Cover */}
                   <div className="relative p-2">
-
                     <div className="relative">
                       <img
                         className="h-48 w-full rounded object-cover"
@@ -220,12 +219,12 @@ export default function ProductList() {
                       {product.discount > 0 ? (
                         <>
                           <div className="flex items-center gap-2">
-                            <span className="text-lg font-bold " style={{ color: '#c92127' }}>
+                            <span className="text-lg font-bold" style={{ color: '#c92127' }}>
                               {formatPrice(calculateFinalPrice(product.price, product.discount))}đ
                             </span>
                             {product.discount > 0 && (
                               <Badge
-                                className="px-2 py-1 text-xs text-white font-bold"
+                                className="px-2 py-1 text-xs font-bold text-white"
                                 style={{ backgroundColor: '#c92127', color: '#ffffff' }}
                               >
                                 -{Math.floor(product.discount)}%
@@ -237,21 +236,17 @@ export default function ProductList() {
                           </div>
                         </>
                       ) : (
-                        <div className="text-lg font-bold text-gray-900">
-                          {formatPrice(product.price)}đ
-                        </div>
+                        <div className="text-lg font-bold text-gray-900">{formatPrice(product.price)}đ</div>
                       )}
                     </div>
 
                     {/* Star Rating */}
                     <StarRating rating={product.rating || 0} />
-
                   </div>
                 </div>
               ))}
             </div>
           )}
-
 
           {/* Empty State */}
           {!loading && products.count === 0 && (

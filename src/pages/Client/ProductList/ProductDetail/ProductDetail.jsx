@@ -13,7 +13,6 @@ import { selectCurrentUser } from '@/redux/userSlice'
 import { Star, Minus, Plus, Truck, CreditCard } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toast } from 'react-toastify'
 import { useAuthCheck } from '@/hooks/useAuthGuard'
 import { QueryClient, useMutation } from '@tanstack/react-query'
@@ -169,28 +168,20 @@ export default function ProductDetail() {
               height={600}
               className="w-full rounded-lg shadow-lg"
             />
-            {/* Discount Badge */}
-            {product.discount > 0 && (
-              <div className="absolute top-4 left-4 rounded-md bg-orange-500 px-3 py-1 text-sm font-bold text-white">
-                <span className="text-lg">GIẢM {product.discount}%</span>
-              </div>
-            )}
           </div>
 
-          {/* Thumbnail Images (5 visible, hover animation + light blue border) */}
-          <div className="flex gap-2">
+          {/* Thumbnail Images (4 visible, hover animation + light blue border) */}
+          <div className="grid w-full grid-cols-4 gap-2">
             {product.productImages &&
             product.productImages.filter((img) => img.imageUrl || img.image_url).length > 0 ? (
               product.productImages
                 .filter((img) => img.imageUrl || img.image_url)
-                .slice(0, 5)
+                .slice(0, 4)
                 .map((image, index) => (
                   <div
                     key={index}
                     className={
-                      // group: enable group-hover for children
-                      'group relative h-20 w-16 cursor-pointer overflow-hidden rounded border-2 border-gray-200 bg-white ' +
-                      // hover effects: slight scale, light-blue border, subtle shadow and ring
+                      'group relative h-20 w-full cursor-pointer overflow-hidden rounded border-2 border-gray-200 bg-white ' +
                       'transform transition duration-200 ease-in-out hover:scale-105 hover:border-blue-200 hover:shadow-lg hover:ring-2 hover:ring-blue-100'
                     }
                   >
@@ -218,9 +209,9 @@ export default function ProductDetail() {
                       No image
                     </div>
 
-                    {/* Overlay +N CHUẨN (trừ 5 vì đang hiển thị 5 ảnh) */}
-                    {index === 4 &&
-                      product.productImages.filter((img) => img.imageUrl || img.image_url).length > 5 && (
+                    {/* Overlay +N CHUẨN (trừ 4 vì đang hiển thị 4 ảnh) */}
+                    {index === 3 &&
+                      product.productImages.filter((img) => img.imageUrl || img.image_url).length > 4 && (
                         <div
                           className={
                             // overlay centered, semi-transparent; also fade when hovering the thumbnail
@@ -228,7 +219,7 @@ export default function ProductDetail() {
                             'opacity-100 transition-opacity duration-200 group-hover:opacity-90'
                           }
                         >
-                          +{product.productImages.filter((img) => img.imageUrl || img.image_url).length - 5}
+                          +{product.productImages.filter((img) => img.imageUrl || img.image_url).length - 4}
                         </div>
                       )}
                   </div>
@@ -357,7 +348,7 @@ export default function ProductDetail() {
           </div>
 
           {/* Action Buttons */}
-          <div className="mt-6 flex gap-3">
+          <div className="mt-6 flex gap-2">
             {product && (
               <AddToCartButton
                 product={{
@@ -367,12 +358,12 @@ export default function ProductDetail() {
                 quantity={quantity}
                 variant="outline"
                 size="default"
-                className="w-40 border-red-600 text-[rgb(201,33,39)] hover:text-red-600"
+                className="border-red-600 text-[rgb(201,33,39)] hover:text-red-600"
                 showQuantitySelector={false}
                 onAddToCartSuccess={resetQuantity}
               />
             )}
-            <Button className="w-40 bg-[rgb(201,33,39)] hover:bg-red-700" onClick={handleBuyNow}>
+            <Button className="h-10 w-50 bg-[rgb(201,33,39)] hover:bg-red-700" onClick={handleBuyNow}>
               Mua ngay
             </Button>
           </div>

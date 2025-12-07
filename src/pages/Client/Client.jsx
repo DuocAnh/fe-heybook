@@ -8,6 +8,7 @@ import Checkout from './Checkout/Checkout'
 import ThankYou from './ThankYou/ThankYou'
 import VNPayReturn from './VNPayReturn'
 import HomePage from './HomePage/HomePage'
+import AuthPage from '../Auth/AuthPage'
 // import ChatWidget from '@/components/ChatWidget'
 
 function Client() {
@@ -24,6 +25,10 @@ function Client() {
           <Route path="/thank-you" element={<ThankYou />} />
           <Route path="/vnpay-return" element={<VNPayReturn />} />
           <Route path="/profile/*" element={<Profile />} />
+
+          {/* ✅ Auth */}
+          <Route path="/login" element={<AuthPage />} />
+          <Route path="/register" element={<AuthPage />} />
         </Routes>
       </div>
       {/* <ChatWidget /> */}

@@ -10,8 +10,8 @@ const ProtectedRoute = ({ requirePermission, requireAdminAccess = false }) => {
   const { hasPermission } = usePermission(currentUser?.role)
   const [hasShownError, setHasShownError] = useState(false)
 
-  // Kiểm tra quyền admin đặc biệt (ADMIN hoặc USER)
-  const hasAdminAccess = currentUser && (currentUser.role === 'ADMIN' || currentUser.role === 'USER')
+  // Kiểm tra quyền admin đặc biệt (ADMIN hoặc STAFF)
+  const hasAdminAccess = currentUser && (currentUser.role === 'ADMIN' || currentUser.role === 'STAFF')
 
   useEffect(() => {
     if (requireAdminAccess && currentUser && !hasAdminAccess && !hasShownError) {

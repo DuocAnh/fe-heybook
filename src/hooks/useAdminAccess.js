@@ -11,13 +11,13 @@ export const useAdminAccess = () => {
   const { hasPermission } = usePermission(currentUser?.role)
 
   const isAdmin = currentUser?.role === 'ADMIN'
-  const isUser = currentUser?.role === 'USER'
+  const isStaff = currentUser?.role === 'STAFF'
   const isClient = currentUser?.role === 'CLIENT'
-  const hasAdminAccess = isAdmin || isUser
+  const hasAdminAccess = isAdmin || isStaff
 
   return {
     isAdmin,
-    isUser,
+    isStaff,
     isClient,
     hasAdminAccess,
     currentUser,

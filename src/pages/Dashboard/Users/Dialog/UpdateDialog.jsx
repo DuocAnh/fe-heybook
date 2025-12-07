@@ -41,8 +41,8 @@ const updateUserSchema = Joi.object({
   address: Joi.string().allow('').optional().messages({
     'string.empty': 'Địa chỉ có thể để trống'
   }),
-  role: Joi.string().valid('ADMIN', 'USER', 'CLIENT').required().messages({
-    'any.only': 'Vai trò phải là ADMIN, USER hoặc CLIENT',
+  role: Joi.string().valid('ADMIN', 'STAFF', 'CLIENT').required().messages({
+    'any.only': 'Vai trò phải là ADMIN, STAFF hoặc CLIENT',
     'any.required': 'Vai trò là bắt buộc'
   }),
   isActive: Joi.boolean().required(),
@@ -272,7 +272,7 @@ export function UpdateDialog({ user, getUsers }) {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="CLIENT">Khách hàng</SelectItem>
-                      <SelectItem value="USER">Nhân viên</SelectItem>
+                      <SelectItem value="STAFF">Nhân viên</SelectItem>
                       <SelectItem value="ADMIN">Quản trị viên</SelectItem>
                     </SelectContent>
                   </Select>
