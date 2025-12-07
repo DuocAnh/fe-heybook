@@ -208,18 +208,18 @@ const Checkout = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="mb-6 flex items-center gap-4">
+      <div className="mb-4 items-center gap-4">
         <Button variant="ghost" size="sm" onClick={() => navigate('/cart')}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Quay lại giỏ hàng
         </Button>
-        <h1 className="text-3xl font-bold">Thanh toán</h1>
+        <h1 className="mt-2 ml-2 text-3xl font-bold">Thanh toán</h1>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)}>
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           <div className="space-y-6 lg:col-span-2">
-            <Card>
+            <Card className="gap-4">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <User className="h-5 w-5" />
@@ -305,7 +305,7 @@ const Checkout = () => {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="gap-4">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <MapPin className="h-5 w-5" />
@@ -322,7 +322,7 @@ const Checkout = () => {
                           setAddressMode('saved')
                           setSelectedAddressId(null)
                         }}
-                        className={`flex-1 rounded-lg border-2 p-3 transition-colors ${
+                        className={`flex-1 cursor-pointer rounded-lg border-1 p-[9px] transition-colors ${
                           addressMode === 'saved'
                             ? 'border-blue-500 bg-blue-50 text-blue-700'
                             : 'border-gray-200 hover:border-gray-300'
@@ -336,7 +336,7 @@ const Checkout = () => {
                           setAddressMode('new')
                           handleNewAddressMode()
                         }}
-                        className={`flex-1 rounded-lg border-2 p-3 transition-colors ${
+                        className={`flex-1 cursor-pointer rounded-lg border-1 p-[9px] transition-colors ${
                           addressMode === 'new'
                             ? 'border-blue-500 bg-blue-50 text-blue-700'
                             : 'border-gray-200 hover:border-gray-300'
@@ -490,7 +490,7 @@ const Checkout = () => {
               <CardHeader>
                 <CardTitle>Tóm tắt đơn hàng</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="min-w-0 space-y-4">
                 <div className="space-y-3">
                   {cart.items.map((item) => (
                     <div key={item.id} className="flex gap-3">

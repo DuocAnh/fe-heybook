@@ -46,6 +46,7 @@ export default function ProductList() {
   const itemsPerPage = 12
 
   const totalPages = Math.ceil(products.count / itemsPerPage)
+  console.log(products.count)
 
   useEffect(() => {
     const urlFilters = {}
@@ -179,7 +180,7 @@ export default function ProductList() {
                       newParams.delete('search')
                       setSearchParams(newParams)
                     }}
-                    className="ml-2 text-blue-600 underline hover:text-blue-800"
+                    className="ml-2 cursor-pointer text-blue-600 underline hover:text-blue-800"
                   >
                     Xóa từ khóa tìm kiếm
                   </button>

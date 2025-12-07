@@ -25,25 +25,11 @@ const Cart = () => {
   const [showVoucherModal, setShowVoucherModal] = useState(false)
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const [selectedItems, setSelectedItems] = useState([])
 
   // Sử dụng useAuthGuard để protect route
   useAuthGuard({
     message: 'Vui lòng đăng nhập để xem giỏ hàng!'
   })
-
-  const handleToggleSelectItem = (itemId) => {
-    setSelectedItems((prevSelected) =>
-      prevSelected.includes(itemId) ? prevSelected.filter((id) => id !== itemId) : [...prevSelected, itemId]
-    )
-  }
-  const handleToggleSelectAll = () => {
-    if (selectedItems.length === cart.items.length) {
-      setSelectedItems([]) // bỏ chọn tất cả
-    } else {
-      setSelectedItems(cart.items.map((item) => item.id)) // chọn tất cả
-    }
-  }
 
   // Fetch cart data
   const {
@@ -143,28 +129,44 @@ const Cart = () => {
     }
   }
 
-  const selectedCartItems = useMemo(() => {
-    if (!cart?.items) return []
-    return cart.items.filter((item) => selectedItems.includes(item.id))
-  }, [cart?.items, selectedItems])
+  // Tổng giỏ hàng (dùng toàn bộ items)
+  const totalAmount = useMemo(() => {
+    if (!cart?.items) return 0
+    return cart.items.reduce((sum, item) => sum + Number(item.totalPrice ?? 0), 0)
+  }, [cart?.items])
 
-  const selectedTotalAmount = useMemo(() => {
-    return selectedCartItems.reduce((sum, item) => +sum + +item.totalPrice, 0)
-  }, [selectedCartItems])
+  // Tính giảm giá áp dụng (nếu backend trả cart.discountAmount thì ưu tiên khi phù hợp)
+  const discountAmount = useMemo(() => {
+    if (!cart?.coupon) return 0
+    const coupon = cart.coupon
 
-  const selectedDiscountAmount = useMemo(() => {
-    return cart?.discountAmount && selectedItems.length === cart?.items?.length ? cart.discountAmount : 0
-  }, [cart?.discountAmount, selectedItems, cart?.items?.length])
+    // Nếu backend đã trả discount tổng cho cart, và giá trị đó hợp lý -> dùng luôn (bảo toàn)
+    if (cart.discountAmount) {
+      // đảm bảo không vượt quá tổng
+      return Math.min(Number(cart.discountAmount), totalAmount)
+    }
 
-  const selectedFinalAmount = useMemo(() => {
-    return selectedTotalAmount - selectedDiscountAmount
-  }, [selectedTotalAmount, selectedDiscountAmount])
+    if (coupon.type === 'PERCENTAGE') {
+      const amt = (totalAmount * Number(coupon.value || 0)) / 100
+      return Math.min(totalAmount, Math.round(amt))
+    }
 
-  // Helper function để validate và get thông tin coupon
+    if (coupon.type === 'FIXED') {
+      return Math.min(totalAmount, Number(coupon.value || 0))
+    }
+
+    return 0
+  }, [cart?.coupon, cart?.discountAmount, totalAmount])
+
+  const finalAmount = useMemo(() => {
+    return Math.max(0, totalAmount - discountAmount)
+  }, [totalAmount, discountAmount])
+
+  // Helper function để validate và get thông tin coupon (dành cho modal)
   const getCouponValidation = (coupon) => {
     if (!cart || !coupon) return { isValid: false, currentTotal: 0, minRequired: 0 }
 
-    const currentTotal = selectedTotalAmount
+    const currentTotal = totalAmount
     const minRequired = Number(coupon.minOrderAmount || 0)
 
     return {
@@ -200,13 +202,13 @@ const Cart = () => {
   }
 
   const handleCheckout = () => {
-    if (selectedItems.length === 0) {
-      toast.error('Vui lòng chọn ít nhất 1 sản phẩm để đặt hàng!')
+    if (!cart || !cart.items || cart.items.length === 0) {
+      toast.error('Giỏ hàng trống, không thể đặt hàng!')
       return
     }
 
-    // Navigate kèm selectedItems (hoặc lưu vào localStorage/context)
-    navigate('/checkout', { state: { selectedItems } })
+    // Chuyển sang checkout với toàn bộ sản phẩm trong giỏ
+    navigate('/checkout', { state: { items: cart.items } })
   }
 
   if (isLoading) {
@@ -247,7 +249,7 @@ const Cart = () => {
             <ShoppingCart className="mx-auto mb-4 h-16 w-16 text-gray-400" />
             <h2 className="mb-2 text-xl font-semibold">Giỏ hàng trống</h2>
             <p className="mb-4 text-gray-500">Bạn chưa có sản phẩm nào trong giỏ hàng</p>
-            <Button onClick={() => navigate('/')}>Tiếp tục mua sắm</Button>
+            <Button onClick={() => navigate('/product-list')}>Tiếp tục mua sắm</Button>
           </CardContent>
         </Card>
       </div>
@@ -264,33 +266,13 @@ const Cart = () => {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Cart Items */}
         <div className="space-y-4 lg:col-span-2">
-          <div className="mb-4 ml-4 flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={selectedItems.length === cart.items.length}
-              onChange={handleToggleSelectAll}
-              className="flex h-[20px] w-[20px] cursor-pointer appearance-none items-center justify-center rounded-[4px] border border-[#545759] transition duration-100 before:hidden before:text-sm before:leading-none before:text-white before:content-['✓'] checked:border-0 checked:bg-[#C92127] checked:before:block"
-            />
-            <span className="ml-1 text-[15px] font-semibold text-[#333]">
-              Chọn tất cả ({cart.items.length} sản phẩm)
-            </span>
-          </div>
           {cart.items.map((item) => (
-            <Card key={item.id}>
+            <Card key={item.id} className="p-4">
               <CardContent className="p-4">
                 <div className="flex gap-4">
-                  <div className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={selectedItems.includes(item.id)}
-                      onChange={() => handleToggleSelectItem(item.id)}
-                      className="flex h-[20px] w-[20px] cursor-pointer appearance-none items-center justify-center rounded-[4px] border border-[#545759] transition duration-100 before:hidden before:text-sm before:leading-none before:text-white before:content-['✓'] checked:border-0 checked:bg-[#C92127] checked:before:block"
-                    />
-                  </div>
-
                   {/* Product Image */}
                   <div
                     className="h-20 w-20 flex-shrink-0 cursor-pointer rounded-lg border border-gray-300 bg-gray-200"
@@ -393,7 +375,7 @@ const Cart = () => {
 
         {/* Order Summary */}
         <div className="lg:col-span-1">
-          <Card className="sticky top-4">
+          <Card className="sticky top-4 py-6">
             <CardHeader>
               <CardTitle>Tóm tắt đơn hàng</CardTitle>
             </CardHeader>
@@ -401,13 +383,13 @@ const Cart = () => {
               <div className="space-y-3">
                 <div className="flex justify-between">
                   <span>Tạm tính:</span>
-                  <span>{formatPriceWithCurrency(selectedTotalAmount)}</span>
+                  <span>{formatPriceWithCurrency(totalAmount)}</span>
                 </div>
 
-                {selectedDiscountAmount > 0 && (
+                {discountAmount > 0 && (
                   <div className="flex justify-between text-green-600">
                     <span>Giảm giá:</span>
-                    <span>-{formatPriceWithCurrency(selectedDiscountAmount)}</span>
+                    <span>-{formatPriceWithCurrency(discountAmount)}</span>
                   </div>
                 )}
 
@@ -415,7 +397,7 @@ const Cart = () => {
 
                 <div className="flex justify-between text-lg font-semibold">
                   <span>Tổng cộng:</span>
-                  <span>{formatPriceWithCurrency(selectedFinalAmount)}</span>
+                  <span>{formatPriceWithCurrency(finalAmount)}</span>
                 </div>
 
                 {/* Coupon Section */}
@@ -485,7 +467,7 @@ const Cart = () => {
                   Đặt hàng
                 </Button>
 
-                <Button variant="outline" className="w-full" onClick={() => navigate('/')}>
+                <Button variant="outline" className="w-full" onClick={() => navigate('/product-list')}>
                   Tiếp tục mua sắm
                 </Button>
               </div>
@@ -503,7 +485,7 @@ const Cart = () => {
           <div className="space-y-4">
             {availableCoupons?.coupons?.map((coupon) => {
               const canUse = canUseCoupon(coupon)
-              const currentTotal = selectedTotalAmount
+              const currentTotal = totalAmount
               const minRequired = Number(coupon?.minOrderAmount || 0)
               const missingAmount = Math.max(0, minRequired - currentTotal)
               const isSelected = cart?.coupon?.code === coupon.code
@@ -521,7 +503,6 @@ const Cart = () => {
                   onClick={(e) => {
                     e.preventDefault()
                     if (isSelected) {
-                      // Nếu đã selected thì không làm gì
                       return
                     }
                     if (canUse) {
@@ -567,19 +548,28 @@ const Cart = () => {
                           {coupon.description}
                         </p>
                         <p
-                          className={`mt-1 text-xs ${
-                            isSelected ? 'text-green-600' : canUse ? 'text-gray-500' : 'text-gray-400'
+                          className={`mt-1 text-sm ${
+                            isSelected ? 'text-green-700' : canUse ? 'text-gray-600' : 'text-gray-400'
                           }`}
                         >
                           Đơn tối thiểu: {formatPriceWithCurrency(minRequired)}
                         </p>
-                        {coupon.expiresAt && (
+                        {coupon.maxDiscountAmount && (
+                          <p
+                            className={`text-sm ${
+                              isSelected ? 'text-green-700' : canUse ? 'text-gray-600' : 'text-gray-400'
+                            }`}
+                          >
+                            Giảm tối đa: {formatPriceWithCurrency(coupon.maxDiscountAmount)}
+                          </p>
+                        )}
+                        {coupon.endDate && (
                           <p
                             className={`text-xs ${
                               isSelected ? 'text-green-600' : canUse ? 'text-gray-500' : 'text-gray-400'
                             }`}
                           >
-                            HSD: {new Date(coupon.expiresAt).toLocaleDateString('vi-VN')}
+                            HSD: {new Date(coupon.endDate).toLocaleDateString('vi-VN')}
                           </p>
                         )}
                       </div>

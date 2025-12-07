@@ -9,7 +9,8 @@ import {
   BookText,
   LibraryBig,
   PencilRuler,
-  Dot
+  Dot,
+  Package
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -258,6 +259,10 @@ export default function Header() {
                     <DropdownMenuItem onClick={handleProfile}>
                       <User className="mr-2 h-4 w-4" />
                       <span>Thông tin cá nhân</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/profile/orders')}>
+                      <Package className="mr-2 h-4 w-4" />
+                      <span>Đơn hàng của tôi</span>
                     </DropdownMenuItem>
                     {(currentUser.role === 'ADMIN' || currentUser.role === 'STAFF') && (
                       <>

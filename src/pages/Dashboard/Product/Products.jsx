@@ -182,7 +182,7 @@ export default function Products() {
           </div>
 
           {/* Pagination */}
-          {products.count > 10 && (
+          {products.count > 6 && (
             <Pagination className="mt-5">
               <PaginationContent>
                 {/* Pagination Previous */}

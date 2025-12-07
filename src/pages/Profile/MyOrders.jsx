@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -31,6 +31,8 @@ import { getUserOrdersAPI, cancelOrderAPI } from '@/apis'
 import { toast } from 'react-toastify'
 
 export default function MyOrders() {
+  const navigate = useNavigate()
+
   const [currentPage, setCurrentPage] = useState(1)
   const [cancelingOrderId, setCancelingOrderId] = useState(null)
   const itemsPerPage = 5
@@ -253,7 +255,11 @@ export default function MyOrders() {
               {/* Order Items */}
               <div className="space-y-3">
                 {order.orderItems?.slice(0, 2).map((item) => (
-                  <div key={item.id} className="flex items-center gap-4">
+                  <div
+                    key={item.id}
+                    onClick={() => navigate(`/product/${item?.productId}`)}
+                    className="flex cursor-pointer items-center gap-4"
+                  >
                     <img
                       src={item.productImage || item.product?.coverImageUrl}
                       alt={item.productName}
