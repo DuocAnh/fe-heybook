@@ -20,7 +20,7 @@ import { productSchema } from '@/utils/validatiors'
 import FieldAlertError from '@/components/Form/FieldAlertError'
 import { toast } from 'react-toastify'
 import { updateProductAPI } from '@/apis'
-import { Textarea } from '@/components/ui/textarea'
+import TextEditor from '@/components/DashBoard/Product/TextEditor'
 
 export default function UpdateDialog({ product, categories, bookGenres, fetchData }) {
   const [open, setOpen] = useState(false)
@@ -170,6 +170,7 @@ export default function UpdateDialog({ product, categories, bookGenres, fetchDat
     setOpen(isOpen)
     if (isOpen) {
       setValue('type', product?.type)
+      setValue('description', product?.description || '')
       setCoverPreviewUrl(product?.coverImageUrl || '')
       // Initialize existing product images
       const images = product?.productImages || []
@@ -493,11 +494,23 @@ export default function UpdateDialog({ product, categories, bookGenres, fetchDat
               <Label className="mb-1 gap-0 pl-[3px]" htmlFor="description">
                 Mô tả<span className="text-red-500">*</span>
               </Label>
-              <Textarea
-                className="z-1 h-35 bg-white"
-                id="description"
-                defaultValue={product?.description}
-                {...register('description')}
+              <Controller
+                name="description"
+                defaultValue={product?.description || ''}
+                control={control}
+                render={({ field }) => (
+                  <TextEditor
+                    value={field.value}
+                    onChange={(content) => {
+                      if (content === '<p><br></p>') {
+                        field.onChange('')
+                      } else {
+                        field.onChange(content)
+                      }
+                    }}
+                    onBlur={() => field.onBlur()}
+                  />
+                )}
               />
               <FieldAlertError errors={errors} fieldName="description" />
             </div>

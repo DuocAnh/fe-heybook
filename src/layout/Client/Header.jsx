@@ -143,7 +143,7 @@ export default function Header() {
   }
 
   return (
-    <header className="border-b border-gray-200 bg-white py-0.5 shadow-sm">
+    <header className="border-b border-gray-200 bg-white py-1 shadow-sm">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center pr-3">

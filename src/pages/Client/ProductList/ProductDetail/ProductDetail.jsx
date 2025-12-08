@@ -1,6 +1,5 @@
-/* eslint-disable indent */
 import { useParams, useNavigate } from 'react-router-dom'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { getProductByIdAPI, checkUserReviewAPI, addToCartAPI } from '@/apis'
 import AddToCartButton from '@/components/AddToCartButton'
 import ReviewForm from '@/components/ReviewForm'
@@ -10,16 +9,19 @@ import { formatPriceWithCurrency } from '@/utils/formatters'
 import { useSelector } from 'react-redux'
 import { selectCurrentUser } from '@/redux/userSlice'
 
-import { Star, Minus, Plus } from 'lucide-react'
+import { Star, Minus, Plus, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'react-toastify'
 import { useAuthCheck } from '@/hooks/useAuthGuard'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation } from '@tanstack/react-query'
+import { queryClient } from '@/main'
+import { Swiper, SwiperSlide } from 'swiper/react'
+import { Navigation } from 'swiper/modules'
+import 'swiper/css'
+import 'swiper/css/navigation'
 
 export default function ProductDetail() {
-  const queryClient = useQueryClient()
-
   const { id } = useParams()
   const navigate = useNavigate()
   const { checkAuth } = useAuthCheck({
@@ -32,6 +34,11 @@ export default function ProductDetail() {
   const [showReviewForm, setShowReviewForm] = useState(false)
   const [totalReviews, setTotalReviews] = useState(0)
   const [expanded, setExpanded] = useState(false)
+  const [hoveredImage, setHoveredImage] = useState(null)
+
+  const galleryImages = product?.productImages?.filter((img) => img.imageUrl || img.image_url) || []
+  const prevRef = useRef(null)
+  const nextRef = useRef(null)
 
   const currentUser = useSelector(selectCurrentUser)
 
@@ -153,80 +160,88 @@ export default function ProductDetail() {
     )
   }
 
-  const finalPrice = (product.price * (100 - product.discount)) / 100
-
   return (
     <div className="mx-auto max-w-7xl bg-gray-50 p-4">
       <div className="grid grid-cols-1 gap-x-8 rounded-lg bg-white p-6 shadow-sm lg:grid-cols-3 lg:gap-x-[30px]">
         {/* Left Column - Images */}
         <div className="col-span-1 space-y-4">
-          {/* Main Image */}
-          <div className="relative">
+          {/* Main Image (square) */}
+          <div className="relative aspect-square w-full overflow-hidden rounded-lg shadow-lg">
             <img
-              src={product.coverImageUrl || '/book-cover.png'}
+              src={hoveredImage || product.coverImageUrl || '/book-cover.png'}
               alt={product.name}
-              width={400}
-              height={600}
-              className="w-full rounded-lg shadow-lg"
+              className="h-full w-full object-cover"
             />
           </div>
 
-          {/* Thumbnail Images (4 visible, hover animation + light blue border) */}
-          <div className="grid w-full grid-cols-4 gap-2">
-            {product.productImages &&
-            product.productImages.filter((img) => img.imageUrl || img.image_url).length > 0 ? (
-              product.productImages
-                .filter((img) => img.imageUrl || img.image_url)
-                .slice(0, 4)
-                .map((image, index) => (
-                  <div
-                    key={index}
-                    className={
-                      'group relative h-20 w-full cursor-pointer overflow-hidden rounded border-2 border-gray-200 bg-white ' +
-                      'transform transition duration-200 ease-in-out hover:scale-105 hover:border-blue-200 hover:shadow-lg hover:ring-2 hover:ring-blue-100'
-                    }
-                  >
-                    <img
-                      src={image.imageUrl || image.image_url}
-                      alt={`${product.name} ${index + 1}`}
-                      className="h-full w-full object-cover"
-                      onError={(e) => {
-                        e.currentTarget.style.display = 'none'
-                        const ph = e.currentTarget.parentElement.querySelector('.placeholder')
-                        if (ph) ph.style.display = 'flex'
-                      }}
-                    />
-
-                    {/* Placeholder khi ảnh lỗi */}
+          {/* Thumbnail slider ngang (Swiper) */}
+          <div className="relative w-full">
+            {galleryImages.length > 0 ? (
+              <Swiper
+                modules={[Navigation]}
+                navigation={{
+                  prevEl: prevRef.current,
+                  nextEl: nextRef.current
+                }}
+                spaceBetween={12}
+                slidesPerView="auto"
+                className="pb-2"
+                onBeforeInit={(swiper) => {
+                  swiper.params.navigation.prevEl = prevRef.current
+                  swiper.params.navigation.nextEl = nextRef.current
+                }}
+              >
+                <button
+                  ref={prevRef}
+                  aria-label="Prev thumbs"
+                  className="absolute top-1/2 left-0 z-10 flex h-10 w-6 -translate-y-1/2 cursor-pointer items-center justify-center rounded-md border border-white/40 bg-black/50 text-white shadow transition hover:border-white/60 hover:bg-black/60"
+                >
+                  <ChevronLeft />
+                </button>
+                <button
+                  ref={nextRef}
+                  aria-label="Next thumbs"
+                  className="absolute top-1/2 right-0 z-10 flex h-10 w-6 -translate-y-1/2 cursor-pointer items-center justify-center rounded-md border border-white/40 bg-black/50 text-white shadow transition hover:border-white/60 hover:bg-black/60"
+                >
+                  <ChevronRight />
+                </button>
+                {galleryImages.map((image, index) => (
+                  <SwiperSlide key={index} style={{ width: '80px' }}>
                     <div
                       className={
-                        // hidden by default, but will fade in if image errors
-                        'placeholder absolute inset-0 hidden items-center justify-center bg-gray-100 px-1 text-center text-xs text-gray-500 ' +
-                        // subtle fade-in when parent hovered
-                        'opacity-100 transition-opacity duration-200 group-hover:opacity-90'
+                        'group relative h-20 w-20 cursor-pointer overflow-hidden rounded border border-gray-200 bg-white ' +
+                        'transform transition duration-200 ease-in-out hover:scale-105 hover:border-blue-200 hover:shadow-lg hover:ring-2 hover:ring-blue-100'
                       }
-                      aria-hidden="true"
+                      onMouseEnter={() => setHoveredImage(image.imageUrl || image.image_url)}
+                      onMouseLeave={() => setHoveredImage(null)}
                     >
-                      No image
-                    </div>
+                      <img
+                        src={image.imageUrl || image.image_url}
+                        alt={`${product.name} ${index + 1}`}
+                        className="h-full w-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none'
+                          const ph = e.currentTarget.parentElement.querySelector('.placeholder')
+                          if (ph) ph.style.display = 'flex'
+                        }}
+                      />
 
-                    {/* Overlay +N CHUẨN (trừ 4 vì đang hiển thị 4 ảnh) */}
-                    {index === 3 &&
-                      product.productImages.filter((img) => img.imageUrl || img.image_url).length > 4 && (
-                        <div
-                          className={
-                            // overlay centered, semi-transparent; also fade when hovering the thumbnail
-                            'absolute inset-0 flex items-center justify-center bg-black/60 text-lg font-semibold text-white ' +
-                            'opacity-100 transition-opacity duration-200 group-hover:opacity-90'
-                          }
-                        >
-                          +{product.productImages.filter((img) => img.imageUrl || img.image_url).length - 4}
-                        </div>
-                      )}
-                  </div>
-                ))
+                      {/* Placeholder khi ảnh lỗi */}
+                      <div
+                        className={
+                          'placeholder absolute inset-0 hidden items-center justify-center bg-gray-100 px-1 text-center text-xs text-gray-500 ' +
+                          'opacity-100 transition-opacity duration-200 group-hover:opacity-90'
+                        }
+                        aria-hidden="true"
+                      >
+                        No image
+                      </div>
+                    </div>
+                  </SwiperSlide>
+                ))}
+              </Swiper>
             ) : (
-              <div className="flex h-20 w-16 items-center justify-center rounded bg-gray-200 text-sm text-gray-500">
+              <div className="flex h-20 w-16 items-center justify-center rounded bg-gray-200 text-center text-sm text-gray-500">
                 No Images
               </div>
             )}
@@ -284,7 +299,7 @@ export default function ProductDetail() {
           </div> */}
 
           {/* Rating and Sales */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             <div className="flex items-center gap-0.5">
               {[1, 2, 3, 4, 5].map((star) => (
                 <Star
@@ -294,7 +309,6 @@ export default function ProductDetail() {
               ))}
               <span className="ml-1 text-sm text-orange-500">({product.totalReviews || 0} đánh giá)</span>
             </div>
-            <div className="mx-2 h-5 w-px bg-gray-400" />
             <span className="text-sm text-gray-600">Đã bán {product.totalSold}</span>
           </div>
 
@@ -434,11 +448,12 @@ export default function ProductDetail() {
             <h3 className="mb-3 text-lg font-semibold">Mô tả sản phẩm</h3>
 
             <div className="relative">
-              <p
-                className={`text-sm leading-relaxed text-gray-600 transition-all duration-300 ${expanded ? 'max-h-full' : 'line-clamp-5'}`}
-              >
-                {product.description}
-              </p>
+              <div
+                className={`prose prose-sm max-w-none text-gray-700 transition-all duration-300 ${
+                  expanded ? 'max-h-full' : 'max-h-40 overflow-hidden'
+                }`}
+                dangerouslySetInnerHTML={{ __html: product.description }}
+              />
 
               {/* Fade mờ phía dưới khi chưa mở */}
               {!expanded && (

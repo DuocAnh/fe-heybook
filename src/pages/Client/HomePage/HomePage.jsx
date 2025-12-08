@@ -70,8 +70,6 @@ export default function HomePage() {
     }
   }, [searchParams, searchQuery, dispatch])
 
-
-
   useEffect(() => {
     const fetchTrendingProducts = async () => {
       try {
@@ -79,8 +77,7 @@ export default function HomePage() {
         const mappedTrending = res.data.map((product) => {
           const price = parseFloat(product.price)
           const discount = parseFloat(product.discount)
-          const originalPrice =
-            discount > 0 ? Math.round(price / (1 - discount / 100)) : price
+          const originalPrice = discount > 0 ? Math.round(price / (1 - discount / 100)) : price
 
           return {
             id: product.id,
@@ -102,7 +99,6 @@ export default function HomePage() {
 
     fetchTrendingProducts()
   }, [])
-
 
   const handleFiltersChange = (newFilters) => {
     setFilters(newFilters)
@@ -149,11 +145,8 @@ export default function HomePage() {
     return (price * (100 - discount)) / 100
   }
 
-
-
   return (
     <div className="container mx-auto px-4 py-2">
-
       {/* Main Content */}
       <div className="lg:col-span-3">
         {/* Loading State */}
@@ -164,52 +157,58 @@ export default function HomePage() {
 
         {/* Trending */}
 
-        <section className=" bg-white rounded-lg shadow-sm overflow-hidden mt-2.5">
-          <h2 className="text-xl font-bold text-red-600 mb-4 flex items-center gap-2 bg-pink-50 px-4 py-6">
-            <img src="https://cdn1.fahasa.com/media/wysiwyg/icon-menu/icon_dealhot_new.png" alt="trending" className="w-6 h-6" />
+        <section className="mt-2.5 overflow-hidden rounded-lg bg-white shadow-sm">
+          <h2 className="mb-4 flex items-center gap-2 bg-pink-50 px-4 py-6 text-xl font-bold text-red-600">
+            <img
+              src="https://cdn1.fahasa.com/media/wysiwyg/icon-menu/icon_dealhot_new.png"
+              alt="trending"
+              className="h-6 w-6"
+            />
             Xu Hướng Mua Sắm
           </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 px-4 py-4">
+          <div className="grid grid-cols-2 gap-4 px-4 py-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
             {trendingProducts.map((product, idx) => (
-              <div key={idx} className="bg-white  p-2  hover:shadow-md transition"
+              <div
+                key={idx}
+                className="cursor-pointer bg-white p-2 transition hover:shadow-md"
                 onClick={() => navigate(`/product/${product.id}`)}
               >
                 <div className="relative">
                   {product.badge && (
-                    <span className="absolute top-2 left-2 bg-orange-500 text-white text-xs px-1 py-0.5 rounded-sm">
+                    <span className="absolute top-2 left-2 rounded-sm bg-orange-500 px-1 py-0.5 text-xs text-white">
                       {product.badge}
                     </span>
                   )}
                   <img
                     src={product.image}
                     alt={product.title}
-                    className="w-[190px] h-[190px] object-cover mx-auto rounded"
+                    className="mx-auto h-[190px] w-[190px] rounded object-cover"
                   />
                 </div>
-                <h3 className="mt-2 text-sm font-medium line-clamp-2">{product.title}</h3>
+                <h3 className="mt-2 line-clamp-2 text-sm font-medium">{product.title}</h3>
                 <div className="flex items-center gap-2">
-                  <span className="text-lg font-bold " style={{ color: '#c92127' }}>
+                  <span className="text-lg font-bold" style={{ color: '#c92127' }}>
                     {formatPrice(calculateFinalPrice(product.price, product.discount))}đ
                   </span>
                   {product.discount > 0 && (
                     <Badge
-                      className="px-2 py-1 text-xs text-white font-bold"
+                      className="px-2 py-1 text-xs font-bold text-white"
                       style={{ backgroundColor: '#c92127', color: '#ffffff' }}
                     >
                       -{Math.floor(product.discount)}%
                     </Badge>
                   )}
                 </div>
-                <div className="text-gray-400 text-sm line-through">{product.originalPrice.toLocaleString()} đ</div>
-                <div className="mt-1 bg-red-100 h-4 rounded text-center text-xs text-red-700">
+                <div className="text-sm text-gray-400 line-through">
+                  {product.originalPrice.toLocaleString()} đ
+                </div>
+                <div className="mt-1 h-4 rounded bg-red-100 text-center text-xs text-red-700">
                   Đã bán {product.sold}
                 </div>
               </div>
             ))}
           </div>
         </section>
-
-
 
         {/* Pagination */}
         {!loading && totalPages > 1 && (
@@ -260,7 +259,6 @@ export default function HomePage() {
           </div>
         )}
       </div>
-
     </div>
   )
 }

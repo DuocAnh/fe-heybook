@@ -21,7 +21,7 @@ import FieldAlertError from '@/components/Form/FieldAlertError'
 import { toast } from 'react-toastify'
 import { X } from 'lucide-react'
 import { createProductAPI } from '@/apis'
-import { Textarea } from '@/components/ui/textarea'
+import TextEditor from '@/components/DashBoard/Product/TextEditor'
 
 export default function CreateDialog({ categories, bookGenres, fetchData }) {
   const [open, setOpen] = useState(false)
@@ -455,7 +455,23 @@ export default function CreateDialog({ categories, bookGenres, fetchData }) {
               <Label className="mb-1 gap-0 pl-[3px]">
                 Mô tả<span className="text-red-500">*</span>
               </Label>
-              <Textarea className="z-1 h-30 bg-white" {...register('description')} />
+              <Controller
+                name="description"
+                control={control}
+                render={({ field }) => (
+                  <TextEditor
+                    value={field.value}
+                    onChange={(content) => {
+                      if (content === '<p><br></p>') {
+                        field.onChange('')
+                      } else {
+                        field.onChange(content)
+                      }
+                    }}
+                    onBlur={() => field.onBlur()}
+                  />
+                )}
+              />
               <FieldAlertError errors={errors} fieldName="description" />
             </div>
             {/* Ảnh */}

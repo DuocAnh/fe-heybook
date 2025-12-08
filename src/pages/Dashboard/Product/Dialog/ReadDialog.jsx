@@ -15,9 +15,10 @@ import { Eye } from 'lucide-react'
 export default function ReadDialog({ product, bookGenres }) {
   const [descExpanded, setDescExpanded] = useState(false)
 
-  const words = product?.description?.trim().split(/\s+/) || []
-  const isLong = words.length > 95
-  const preview = isLong ? words.slice(0, 95).join(' ') : product?.description || ''
+  const galleryImages =
+    product?.productImages
+      ?.map((img) => (typeof img === 'string' ? img : img.imageUrl || img.image_url))
+      .filter(Boolean) || []
 
   return (
     <Dialog>
@@ -40,6 +41,15 @@ export default function ReadDialog({ product, bookGenres }) {
               className="max-h-45 w-50 rounded-lg object-cover"
             />
           </div>
+          {galleryImages.length > 0 && (
+            <div className="mt-2 grid grid-cols-5 gap-2">
+              {galleryImages.map((url, idx) => (
+                <div key={idx} className="h-20 w-full overflow-hidden rounded border bg-gray-50">
+                  <img src={url} alt={`Ảnh sản phẩm ${idx + 1}`} className="h-full w-full object-cover" />
+                </div>
+              ))}
+            </div>
+          )}
           <div className="flex w-full flex-row gap-2">
             <p className="font-medium">Mã sản phẩm:</p>
             <p className="break-words">#{product?.id}</p>
@@ -78,20 +88,28 @@ export default function ReadDialog({ product, bookGenres }) {
             </p>
           </div>
 
-          {/* Mô tả có giới hạn 100 từ và xem thêm */}
-          <div className="flex w-full flex-row gap-2">
+          {/* Mô tả (render HTML) */}
+          <div className="flex w-full flex-col gap-1">
             <p className="font-medium">Mô tả:</p>
-            <p className="flex-1 break-words">
-              {!descExpanded && isLong ? `${preview}...` : product?.description}
-              {isLong && (
-                <button
-                  onClick={() => setDescExpanded((prev) => !prev)}
-                  className="ml-2 text-blue-600 hover:underline"
-                >
-                  {descExpanded ? 'Thu gọn' : 'Xem thêm'}
-                </button>
+            <div className="relative">
+              <div
+                className={`prose prose-sm max-w-none text-gray-700 transition-all duration-300 ${
+                  descExpanded ? 'max-h-full' : 'max-h-40 overflow-hidden'
+                }`}
+                dangerouslySetInnerHTML={{ __html: product?.description || '' }}
+              />
+              {!descExpanded && (
+                <div className="pointer-events-none absolute bottom-0 left-0 h-10 w-full bg-gradient-to-t from-white to-transparent" />
               )}
-            </p>
+            </div>
+            {product?.description && (
+              <button
+                onClick={() => setDescExpanded((prev) => !prev)}
+                className="w-fit cursor-pointer text-sm text-blue-600 hover:underline"
+              >
+                {descExpanded ? 'Thu gọn' : 'Xem thêm'}
+              </button>
+            )}
           </div>
           <div className="flex w-full flex-row gap-2">
             <p className="font-medium">Kích thước:</p>

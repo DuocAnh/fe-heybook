@@ -60,6 +60,7 @@ export const productSchema = Joi.object({
   }),
 
   description: Joi.string().min(10).max(10000).required().trim().messages({
+    'any.required': 'Vui lòng nhập mô tả!',
     'string.empty': 'Vui lòng nhập mô tả!',
     'string.min': 'Mô tả phải nhiều hơn 10 ký tự!',
     'string.max': 'Mô tả phải ít hơn hoặc bằng 10000 ký tự!'
