@@ -63,12 +63,12 @@ const getMenuItems = (permissions) =>
       url: '/dashboard/users',
       icon: Users,
       permission: 'canManageUsers'
-    },
-    {
-      title: 'Chat hỗ trợ',
-      url: '/dashboard/livechat',
-      icon: MessageSquare
     }
+    // {
+    //   title: 'Chat hỗ trợ',
+    //   url: '/dashboard/livechat',
+    //   icon: MessageSquare
+    // }
   ].filter((item) => !item.permission || permissions[item.permission])
 
 export default function SidebarDashboard() {
