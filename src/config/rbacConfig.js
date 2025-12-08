@@ -27,10 +27,11 @@ export const rolePermissions = {
   ],
   [roles.ADMIN]: [
     permissions.VIEW_ADMIN,
-    permissions.MANAGE_USERS,
     permissions.MANAGE_CATEGORIES,
     permissions.MANAGE_BOOK_GENRES,
     permissions.MANAGE_PRODUCTS,
-    permissions.MANAGE_ORDERS
+    permissions.MANAGE_DISCOUNTS,
+    permissions.MANAGE_ORDERS,
+    permissions.MANAGE_USERS
   ]
 }

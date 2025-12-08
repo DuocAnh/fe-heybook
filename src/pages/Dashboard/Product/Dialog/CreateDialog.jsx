@@ -23,9 +23,12 @@ import { X } from 'lucide-react'
 import { createProductAPI } from '@/apis'
 import { Textarea } from '@/components/ui/textarea'
 
-export default function CreateDialog({ categories, bookGenres }) {
+export default function CreateDialog({ categories, bookGenres, fetchData }) {
+  const [open, setOpen] = useState(false)
   const [coverFile, setCoverFile] = useState(null)
   const [coverPreviewUrl, setCoverPreviewUrl] = useState('')
+  const [productImageFiles, setProductImageFiles] = useState([])
+  const [productImagePreviews, setProductImagePreviews] = useState([])
 
   const {
     register,
@@ -33,6 +36,7 @@ export default function CreateDialog({ categories, bookGenres }) {
     setValue,
     watch,
     control,
+    reset,
     formState: { errors }
   } = useForm({
     resolver: joiResolver(productSchema),
@@ -65,8 +69,29 @@ export default function CreateDialog({ categories, bookGenres }) {
     setValue('coverImageUrl', null, { shouldValidate: true })
   }
 
+  const handleProductImagesChange = (e) => {
+    const files = Array.from(e.target.files || [])
+    if (files.length + productImageFiles.length > 10) {
+      toast.error('Tối đa 10 ảnh sản phẩm')
+      return
+    }
+    const newFiles = [...productImageFiles, ...files]
+    setProductImageFiles(newFiles)
+    const newPreviews = files.map((file) => URL.createObjectURL(file))
+    setProductImagePreviews([...productImagePreviews, ...newPreviews])
+  }
+
+  const removeProductImage = (index) => {
+    const newFiles = productImageFiles.filter((_, i) => i !== index)
+    const newPreviews = productImagePreviews.filter((_, i) => i !== index)
+    setProductImageFiles(newFiles)
+    setProductImagePreviews(newPreviews)
+    // Revoke object URL to free memory
+    URL.revokeObjectURL(productImagePreviews[index])
+  }
+
   const createProduct = async (data) => {
-    // Tách riêng FormData và các phần text/object
+    // Separate FormData and text/object parts
     const formData = new FormData()
     const { bookDetail, stationeryDetail, ...rest } = data
 
@@ -76,28 +101,35 @@ export default function CreateDialog({ categories, bookGenres }) {
       ...(data.type === 'STATIONERY' ? { stationeryDetail } : {})
     }
 
-    // Hàm đệ quy để append payload nested dưới dạng bracket-notation
+    // Recursive function to append nested payload in bracket-notation format
     const appendPayload = (obj, parentKey = '') => {
       Object.entries(obj).forEach(([key, value]) => {
         if (value == null) return
 
-        // path dạng "bookDetail[author]" hoặc "price"
+        // Path format: "bookDetail[author]" or "price"
         const name = parentKey ? `${parentKey}[${key}]` : key
 
         if (typeof value === 'object' && !Array.isArray(value)) {
-          // object con → đệ quy xuống
+          // Nested object → recursively append
           appendPayload(value, name)
         } else {
-          // primitive → toString
+          // Primitive value → convert to string
           formData.append(name, String(value))
         }
       })
     }
     appendPayload(payload)
 
-    // Cuối cùng thêm file:
+    // Append cover image file
     if (coverFile) {
       formData.append('coverImageUrl', coverFile, coverFile.name)
+    }
+
+    // Append product images files
+    if (productImageFiles && productImageFiles.length > 0) {
+      productImageFiles.forEach((file) => {
+        formData.append('productImages', file, file.name)
+      })
     }
 
     try {
@@ -105,6 +137,19 @@ export default function CreateDialog({ categories, bookGenres }) {
         pending: 'Đang tạo sản phẩm…'
       })
       toast.success('Thêm sản phẩm thành công!')
+      // Close modal and reset form after successful creation
+      setOpen(false)
+      reset()
+      setCoverFile(null)
+      setCoverPreviewUrl('')
+      setProductImageFiles([])
+      setProductImagePreviews([])
+      // Revoke all object URLs
+      productImagePreviews.forEach((url) => URL.revokeObjectURL(url))
+      // Refresh data list after successful creation
+      if (fetchData) {
+        fetchData()
+      }
     } catch (err) {
       toast.error(err?.response?.data?.message || err.message)
     }
@@ -118,8 +163,22 @@ export default function CreateDialog({ categories, bookGenres }) {
     console.log('❌ onInvalid, errors:', errors)
   }
 
+  const handleOpenChange = (isOpen) => {
+    setOpen(isOpen)
+    if (!isOpen) {
+      // Reset form when closing modal
+      reset()
+      setCoverFile(null)
+      setCoverPreviewUrl('')
+      setProductImageFiles([])
+      // Revoke all object URLs
+      productImagePreviews.forEach((url) => URL.revokeObjectURL(url))
+      setProductImagePreviews([])
+    }
+  }
+
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button className="ml-auto gap-1 pl-10">
           <Plus />
@@ -411,7 +470,7 @@ export default function CreateDialog({ categories, bookGenres }) {
                 accept="image/*"
                 className="z-1 bg-white"
                 {...register('coverImageUrl', {
-                  // RHF sẽ merge handler này với onChange của nó
+                  // RHF will merge this handler with its onChange
                   onChange: (e) => {
                     handleCoverImageChange(e)
                   }
@@ -433,6 +492,40 @@ export default function CreateDialog({ categories, bookGenres }) {
                   >
                     <X size={14} />
                   </button>
+                </div>
+              )}
+            </div>
+            {/* Product Images */}
+            <div className="flex flex-col gap-1">
+              <Label htmlFor="productImages" className="gap-0 pl-[3px]">
+                Ảnh sản phẩm (Tối đa 10 ảnh)
+              </Label>
+              <Input
+                type="file"
+                id="productImages"
+                accept="image/*"
+                multiple
+                className="z-1 bg-white"
+                onChange={handleProductImagesChange}
+              />
+              {productImagePreviews.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {productImagePreviews.map((preview, index) => (
+                    <div key={index} className="relative h-24 w-24">
+                      <img
+                        src={preview}
+                        alt={`Product preview ${index + 1}`}
+                        className="h-full w-full rounded object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeProductImage(index)}
+                        className="absolute top-1 right-1 rounded bg-red-500 p-0.5 text-white"
+                      >
+                        <X size={12} />
+                      </button>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>

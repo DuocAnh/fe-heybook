@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
-import { Pencil } from 'lucide-react'
+import { Pencil, X } from 'lucide-react'
 import { useForm, Controller } from 'react-hook-form'
 import { joiResolver } from '@hookform/resolvers/joi'
 import { productSchema } from '@/utils/validatiors'
@@ -26,6 +26,9 @@ export default function UpdateDialog({ product, categories, bookGenres, fetchDat
   const [open, setOpen] = useState(false)
   const [coverFile, setCoverFile] = useState(null)
   const [coverPreviewUrl, setCoverPreviewUrl] = useState('')
+  const [productImageFiles, setProductImageFiles] = useState([])
+  const [productImagePreviews, setProductImagePreviews] = useState([])
+  const [existingProductImages, setExistingProductImages] = useState([])
 
   const {
     register,
@@ -56,7 +59,37 @@ export default function UpdateDialog({ product, categories, bookGenres, fetchDat
   const handleCoverImageChange = (e) => {
     const file = e.target.files?.[0]
     setCoverFile(file)
-    setCoverPreviewUrl(URL.createObjectURL(file))
+    if (file) {
+      setCoverPreviewUrl(URL.createObjectURL(file))
+    }
+  }
+
+  const handleProductImagesChange = (e) => {
+    const files = Array.from(e.target.files || [])
+    if (files.length + productImageFiles.length > 10) {
+      toast.error('Tối đa 10 ảnh sản phẩm')
+      return
+    }
+    const newFiles = [...productImageFiles, ...files]
+    setProductImageFiles(newFiles)
+    const newPreviews = files.map((file) => URL.createObjectURL(file))
+    setProductImagePreviews([...productImagePreviews, ...newPreviews])
+  }
+
+  const removeProductImage = (index, isExisting = false) => {
+    if (isExisting) {
+      // Remove from existing images
+      const newExisting = existingProductImages.filter((_, i) => i !== index)
+      setExistingProductImages(newExisting)
+    } else {
+      // Remove from new uploads
+      const newFiles = productImageFiles.filter((_, i) => i !== index)
+      const newPreviews = productImagePreviews.filter((_, i) => i !== index)
+      setProductImageFiles(newFiles)
+      // Revoke object URL
+      URL.revokeObjectURL(productImagePreviews[index])
+      setProductImagePreviews(newPreviews)
+    }
   }
 
   const updateProduct = async (data) => {
@@ -94,8 +127,25 @@ export default function UpdateDialog({ product, categories, bookGenres, fetchDat
     // Gọi hàm lần đầu với payload gốc để append toàn bộ trường
     appendPayload(payload)
 
+    // Append cover image file
     if (coverFile) {
       formData.append('coverImageUrl', coverFile, coverFile.name)
+    }
+
+    // Append product images files (new uploads)
+    if (productImageFiles && productImageFiles.length > 0) {
+      productImageFiles.forEach((file) => {
+        formData.append('productImages', file, file.name)
+      })
+    }
+
+    // Always send existing product images as URLs (if any remain)
+    // Backend will merge new files with existing URLs if both are provided
+    if (existingProductImages.length > 0) {
+      existingProductImages.forEach((img, index) => {
+        const imageUrl = typeof img === 'string' ? img : img.imageUrl || img.image_url
+        formData.append(`productImages[${index}][imageUrl]`, imageUrl)
+      })
     }
 
     try {
@@ -120,7 +170,20 @@ export default function UpdateDialog({ product, categories, bookGenres, fetchDat
     setOpen(isOpen)
     if (isOpen) {
       setValue('type', product?.type)
-      setCoverPreviewUrl(product?.coverImageUrl)
+      setCoverPreviewUrl(product?.coverImageUrl || '')
+      // Initialize existing product images
+      const images = product?.productImages || []
+      setExistingProductImages(images)
+      setProductImageFiles([])
+      setProductImagePreviews([])
+    } else {
+      // Cleanup when closing
+      setCoverFile(null)
+      setCoverPreviewUrl('')
+      setProductImageFiles([])
+      productImagePreviews.forEach((url) => URL.revokeObjectURL(url))
+      setProductImagePreviews([])
+      setExistingProductImages([])
     }
   }
 
@@ -438,7 +501,7 @@ export default function UpdateDialog({ product, categories, bookGenres, fetchDat
               />
               <FieldAlertError errors={errors} fieldName="description" />
             </div>
-            {/* Ảnh */}
+            {/* Cover Image */}
             <div className="flex flex-col gap-1">
               <Label htmlFor="coverImageUrl" className="gap-0 pl-[3px]">
                 Ảnh bìa<span className="text-red-500">*</span>
@@ -462,6 +525,74 @@ export default function UpdateDialog({ product, categories, bookGenres, fetchDat
                     alt="Cover preview"
                     className="h-full w-full rounded object-cover"
                   />
+                </div>
+              )}
+            </div>
+
+            {/* Product Images */}
+            <div className="flex flex-col gap-1">
+              <Label htmlFor="productImages" className="gap-0 pl-[3px]">
+                Ảnh sản phẩm (Tối đa 10 ảnh)
+              </Label>
+              <Input
+                type="file"
+                id="productImages"
+                accept="image/*"
+                multiple
+                className="z-1 bg-white"
+                onChange={handleProductImagesChange}
+              />
+
+              {/* Existing product images */}
+              {existingProductImages.length > 0 && (
+                <div className="mt-2">
+                  <p className="mb-1 text-sm text-gray-600">Ảnh hiện có:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {existingProductImages.map((img, index) => {
+                      const imageUrl = typeof img === 'string' ? img : img.imageUrl || img.image_url
+                      return (
+                        <div key={index} className="relative h-24 w-24">
+                          <img
+                            src={imageUrl}
+                            alt={`Existing product ${index + 1}`}
+                            className="h-full w-full rounded object-cover"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeProductImage(index, true)}
+                            className="absolute top-1 right-1 rounded bg-red-500 p-0.5 text-white"
+                          >
+                            <X size={12} />
+                          </button>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* New product image previews */}
+              {productImagePreviews.length > 0 && (
+                <div className="mt-2">
+                  <p className="mb-1 text-sm text-gray-600">Ảnh mới:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {productImagePreviews.map((preview, index) => (
+                      <div key={index} className="relative h-24 w-24">
+                        <img
+                          src={preview}
+                          alt={`Product preview ${index + 1}`}
+                          className="h-full w-full rounded object-cover"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeProductImage(index, false)}
+                          className="absolute top-1 right-1 rounded bg-red-500 p-0.5 text-white"
+                        >
+                          <X size={12} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>

@@ -10,15 +10,16 @@ import { formatPriceWithCurrency } from '@/utils/formatters'
 import { useSelector } from 'react-redux'
 import { selectCurrentUser } from '@/redux/userSlice'
 
-import { Star, Minus, Plus, Truck, CreditCard } from 'lucide-react'
+import { Star, Minus, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'react-toastify'
 import { useAuthCheck } from '@/hooks/useAuthGuard'
-import { QueryClient, useMutation } from '@tanstack/react-query'
-import { queryClient } from '@/main'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 
 export default function ProductDetail() {
+  const queryClient = useQueryClient()
+
   const { id } = useParams()
   const navigate = useNavigate()
   const { checkAuth } = useAuthCheck({
@@ -283,7 +284,7 @@ export default function ProductDetail() {
           </div> */}
 
           {/* Rating and Sales */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <div className="flex items-center gap-0.5">
               {[1, 2, 3, 4, 5].map((star) => (
                 <Star
@@ -293,6 +294,7 @@ export default function ProductDetail() {
               ))}
               <span className="ml-1 text-sm text-orange-500">({product.totalReviews || 0} đánh giá)</span>
             </div>
+            <div className="mx-2 h-5 w-px bg-gray-400" />
             <span className="text-sm text-gray-600">Đã bán {product.totalSold}</span>
           </div>
 
